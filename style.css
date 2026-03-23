@@ -1,0 +1,144 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: white;
+}
+
+/* NAVBAR */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+/* LOGIN BUTTON (RIGHT SIDE, MODERN) */
+.btn-outline {
+    padding: 10px 20px;
+    border-radius: 25px;
+    border: none;
+    background: linear-gradient(45deg, #00c6ff, #0072ff);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-outline:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 10px rgba(0,198,255,0.7);
+}
+
+/* HERO */
+.hero {
+    text-align: center;
+    padding: 80px 20px 40px;
+}
+
+.hero h1 {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    opacity: 0.8;
+}
+
+/* CONTENT */
+.content {
+    padding: 30px 60px;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* GRID */
+.grid {
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
+    padding: 30px;
+    border-radius: 15px;
+    width: 340px;
+}
+
+.switch-btn {
+    margin-top: 10px;
+    background: none;
+    border: none;
+    color: #00c6ff;
+    cursor: pointer;
+}
+
+.modal-content {
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #ff4b2b;
+    transform: scale(1.2);
+}
+
+.seats {
+    display: grid;
+    grid-template-columns: repeat(8, 50px);
+    gap: 10px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.seat {
+    width: 50px;
+    height: 50px;
+    background: #555;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.seat:hover {
+    background: #777;
+}
+
+.seat.selected {
+    background: #00c6ff;
+}
+
+.seat.booked {
+    background: red;
+    cursor: not-allowed;
+}
