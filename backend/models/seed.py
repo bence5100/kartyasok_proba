@@ -1,4 +1,4 @@
-from models import Sessionmaker,Base, engine, Movie, Room , Showtime
+from models.models import Sessionmaker,Base, engine, Movie, Room , Showtime
 import datetime
 
 

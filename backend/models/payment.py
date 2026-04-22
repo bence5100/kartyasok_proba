@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Sessionmaker, Booking, Showtime, Movie
-from secret import generate_ticket_key
+from models.models import Sessionmaker, Booking, Showtime, Movie
+from models.secret import generate_ticket_key
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 def get_db():
@@ -30,15 +30,15 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
     }
     
     multiplier = discounts.get(booking_record.ticket_type, 1.0)
-    final_price = Showtime_record.price * booking_record.seats_booked
+    final_price = Showtime_record.price * booking_record.seats_booked       #TODO \\||// Showtime_record.price -->  Showtime_record.base_price
     
-    if Booking.is_vip_seat:
+    if booking_record.is_vip_seat:
         final_price += 500.0 # VIP helyek 50%-kal drágábbak
         
     
         
-    Booking.total_price = final_price
-    Booking.ticket_type = ticket_type
+    booking_record.total_price = final_price
+    booking_record.ticket_type = ticket_type
     db.commit()
     
     return{
@@ -49,7 +49,7 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
     }
     
         
-@router.post("/verfiy/{booking_id}")
+@router.post("/verify/{booking_id}")
 def verify_payment(booking_id: int, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
