@@ -17,7 +17,7 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
-    
+        
     Showtime_record = db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
     
     
