@@ -3,24 +3,27 @@ import { useState, useEffect } from "react";
 
 function Booking() {
   const location = useLocation();
-  const { movie, time } = location.state || {};
+
+  console.log("STATE:", location.state);
+
+  const { movieId, time } = location.state || {};
 
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
 
   // 🪑 FOGLALT HELYEK BETÖLTÉSE
   useEffect(() => {
-    if (!movie || !time) return;
+    if (!movieId || !time) return;
 
-    fetch(`http://localhost:8000/seats/${movie}/${time}`)
+    fetch(`http://localhost:8000/seats/${movieId}/${time}`)
       .then(res => res.json())
       .then(data => setBookedSeats(data))
       .catch(err => console.error(err));
-  }, [movie, time]);
+  }, [movieId, time]);
 
   // 🧠 SEAT KATTINTÁS
   const toggleSeat = (index) => {
-    if (bookedSeats.includes(index)) return; // ❌ foglalt
+    if (bookedSeats.includes(index)) return;
 
     if (selectedSeats.includes(index)) {
       setSelectedSeats(selectedSeats.filter(s => s !== index));
@@ -38,7 +41,7 @@ function Booking() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          movie_id: movie,
+          movie_id: movieId,
           time: time,
           seats: selectedSeats
         })
@@ -53,8 +56,8 @@ function Booking() {
     }
   };
 
-  // ⚠️ ha nincs adat (pl. refresh)
-  if (!movie || !time) {
+  // ⚠️ ha nincs adat (pl refresh)
+  if (!movieId || !time) {
     return <h1>Hiányzó adatok</h1>;
   }
 
@@ -67,7 +70,7 @@ function Booking() {
       <section className="content">
         <h1 className="section-title">Helyfoglalás</h1>
 
-        <p>{movie} - {time}</p>
+        <p>{movieId} - {time}</p>
 
         <div className="seats">
           {Array.from({ length: 100 }).map((_, i) => {
