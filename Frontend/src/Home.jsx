@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 function Home() {
   const [showModal, setShowModal] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [movies, setMovies] = useState([]);
 
   const openLogin = () => {
     setShowModal(true);
@@ -25,17 +26,84 @@ function Home() {
   const navigate = useNavigate();
 
   const openMovie = (movie) => {
-  navigate(`/movie/${movie}`);
+    navigate(`/movie/${movie}`);
   };
 
-  const login = (e) => {
+  // 🎬 FILMEK BETÖLTÉSE BACKENDBŐL
+  useEffect(() => {
+  fetch("http://localhost:8000/movies")
+    .then(res => res.json())
+    .then(data => {
+      console.log("FILMEK:", data);
+      setMovies(data);
+    })
+    .catch(err => console.error(err));
+}, []);
+
+  // 🔐 LOGIN
+  const login = async (e) => {
     e.preventDefault();
-    alert("Bejelentkezés (később backend)");
+
+    const form = e.target;
+    const username = form[0].value;
+    const password = form[1].value;
+
+    try {
+      const res = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          password
+        })
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      alert("Sikeres bejelentkezés!");
+      closeLogin();
+
+    } catch (err) {
+      console.error(err);
+      alert("Hiba történt!");
+    }
   };
 
-  const register = (e) => {
+  // 📝 REGISTER
+  const register = async (e) => {
     e.preventDefault();
-    alert("Regisztráció (később backend)");
+
+    const form = e.target;
+    const username = form[0].value;
+    const email = form[1].value;
+    const password = form[2].value;
+
+    try {
+      const res = await fetch("http://localhost:8000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      alert("Sikeres regisztráció!");
+      setIsLogin(true);
+
+    } catch (err) {
+      console.error(err);
+      alert("Hiba történt!");
+    }
   };
 
   return (
@@ -63,19 +131,18 @@ function Home() {
         <h2 className="section-title">Most futó filmek</h2>
 
         <div className="movies grid">
-          <div className="movie card" onClick={() => openMovie("avatar")}>
-            <div className="card-body">
-              <h3>Avatar 2</h3>
-              <p>Sci-fi kaland</p>
+          {movies.map(movie => (
+            <div
+              key={movie.id}
+              className="movie card"
+              onClick={() => openMovie(movie.id)}
+            >
+              <div className="card-body">
+                <h3>{movie.title}</h3>
+                <p>{movie.description}</p>
+              </div>
             </div>
-          </div>
-
-          <div className="movie card" onClick={() => openMovie("oppenheimer")}>
-            <div className="card-body">
-              <h3>Oppenheimer</h3>
-              <p>Történelmi dráma</p>
-            </div>
-          </div>
+          ))}
         </div>
       </main>
 
