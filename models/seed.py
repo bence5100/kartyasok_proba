@@ -1,4 +1,5 @@
-from models import Sessionmaker,Base, engine, Movie, Room , Showtime
+from models import Sessionmaker,Base, engine, Movie, Room , Showtime, User
+from passlib.context import CryptContext
 import datetime
 
 
@@ -42,9 +43,38 @@ def upload_and_update():
         db.close()
         
         
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def seed_admin():
+    db = Sessionmaker()
+    
+    # Ellenőrizzük, létezik-e már az admin, hogy ne dobjon hibát többszöri futtatásnál
+    admin_exists = db.query(User).filter(User.username == "admin").first()
+    
+    if not admin_exists:
+        print("Admin létrehozása...")
+        hashed_password = pwd_context.hash("admin123") # Ez lesz a jelszava: admin123
+        
+        new_admin = User(
+            username="admin",
+            email="admin@mozi.hu",
+            hashed_password=hashed_password,
+            is_admin=True # EZ A LÉNYEG: ő lesz az admin!
+        )
+        
+        db.add(new_admin)
+        db.commit()
+        print("Admin sikeresen létrehozva!")
+    else:
+        print("Az admin már létezik az adatbázisban.")
+    
+    db.close()
+        
+        
     
 print("database successfully seeded with movies, rooms, and showtimes.")
     
 if __name__ == "__main__":    
     upload_and_update()
+    seed_admin()
 
