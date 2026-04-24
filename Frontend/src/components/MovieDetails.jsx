@@ -1,28 +1,24 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  console.log("ID:", id);
+
   const [selectedTime, setSelectedTime] = useState(null);
+  const [movie, setMovie] = useState(null);
 
-  const movies = {
-    avatar: {
-      title: "Avatar 2",
-      desc: "Sci-fi kaland film",
-      times: ["18:00", "20:30"]
-    },
-    oppenheimer: {
-      title: "Oppenheimer",
-      desc: "Történelmi dráma",
-      times: ["17:00", "21:00"]
-    }
-  };
+  // 🎬 FILM BETÖLTÉSE BACKENDBŐL
+  useEffect(() => {
+    fetch(`http://localhost:8000/movies/${id}`)
+      .then(res => res.json())
+      .then(data => setMovie(data))
+      .catch(err => console.error(err));
+  }, [id]);
 
-  const movie = movies[id];
-
-  if (!movie) return <h1>Nincs ilyen film</h1>;
+  if (!movie) return <h1>Betöltés...</h1>;
 
   const selectTime = (time) => {
     setSelectedTime(time);
@@ -38,12 +34,12 @@ function MovieDetails() {
       </header>
 
       <main className="content">
-        <p className="movie-desc">{movie.desc}</p>
+        <p className="movie-desc">{movie.description}</p>
 
         <h3 className="section-title">Időpontok</h3>
 
         <div className="times-grid">
-          {movie.times.map((time, i) => (
+          {movie.times?.map((time, i) => (
             <div
               key={i}
               className={`time-card ${selectedTime === time ? "active" : ""}`}
