@@ -8,6 +8,7 @@ Starting the server:
 --
 ```cmd
 uv run uvicorn app.main:app --reload
+python -m uvicorn main:app --reload
 ```
 Example requests:
 

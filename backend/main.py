@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware  ##TODO nem biztos hogy kell 
 
 from models.payment import router as payment_router
 from models.models import Base, engine
+from api.router import router
 
 
 app = FastAPI(title="Absolute Cinema API")
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(payment_router)
+app.include_router(router)      ##TODO lehet h ez nem kell
 
 
 @app.get("/")
