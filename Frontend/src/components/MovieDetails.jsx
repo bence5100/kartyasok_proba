@@ -1,8 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 function MovieDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [selectedTime, setSelectedTime] = useState(null);
 
   const movies = {
     avatar: {
@@ -22,24 +25,32 @@ function MovieDetails() {
   if (!movie) return <h1>Nincs ilyen film</h1>;
 
   const selectTime = (time) => {
-    navigate("/booking", { state: { movie: movie.title, time } });
+    setSelectedTime(time);
+    setTimeout(() => {
+      navigate("/booking", { state: { movie: movie.title, time } });
+    }, 200);
   };
 
   return (
-    <div>
-      <header>
+    <div className="movie-details">
+      <header className="navbar">
         <h1>{movie.title}</h1>
       </header>
 
-      <main>
-        <p>{movie.desc}</p>
+      <main className="content">
+        <p className="movie-desc">{movie.desc}</p>
 
-        <h3>Időpontok</h3>
-        <div>
+        <h3 className="section-title">Időpontok</h3>
+
+        <div className="times-grid">
           {movie.times.map((time, i) => (
-            <button key={i} onClick={() => selectTime(time)}>
+            <div
+              key={i}
+              className={`time-card ${selectedTime === time ? "active" : ""}`}
+              onClick={() => selectTime(time)}
+            >
               {time}
-            </button>
+            </div>
           ))}
         </div>
       </main>

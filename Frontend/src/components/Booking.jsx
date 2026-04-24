@@ -1,13 +1,27 @@
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Booking() {
   const location = useLocation();
   const { movie, time } = location.state || {};
 
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [bookedSeats, setBookedSeats] = useState([]);
 
+  // 🪑 FOGLALT HELYEK BETÖLTÉSE
+  useEffect(() => {
+    if (!movie || !time) return;
+
+    fetch(`http://localhost:8000/seats/${movie}/${time}`)
+      .then(res => res.json())
+      .then(data => setBookedSeats(data))
+      .catch(err => console.error(err));
+  }, [movie, time]);
+
+  // 🧠 SEAT KATTINTÁS
   const toggleSeat = (index) => {
+    if (bookedSeats.includes(index)) return; // ❌ foglalt
+
     if (selectedSeats.includes(index)) {
       setSelectedSeats(selectedSeats.filter(s => s !== index));
     } else {
@@ -15,9 +29,34 @@ function Booking() {
     }
   };
 
-  const confirmBooking = () => {
-    alert(`Foglalva: ${movie} - ${time}\nHelyek: ${selectedSeats.join(", ")}`);
+  // 🎟️ FOGLALÁS
+  const confirmBooking = async () => {
+    try {
+      await fetch("http://localhost:8000/booking", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          movie_id: movie,
+          time: time,
+          seats: selectedSeats
+        })
+      });
+
+      alert("Foglalás sikeres!");
+      setSelectedSeats([]);
+
+    } catch (err) {
+      console.error(err);
+      alert("Hiba történt!");
+    }
   };
+
+  // ⚠️ ha nincs adat (pl. refresh)
+  if (!movie || !time) {
+    return <h1>Hiányzó adatok</h1>;
+  }
 
   return (
     <div>
@@ -31,15 +70,22 @@ function Booking() {
         <p>{movie} - {time}</p>
 
         <div className="seats">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div
-              key={i}
-              className={`seat ${selectedSeats.includes(i) ? "selected" : ""}`}
-              onClick={() => toggleSeat(i)}
-            >
-              {i + 1}
-            </div>
-          ))}
+          {Array.from({ length: 40 }).map((_, i) => {
+            const isSelected = selectedSeats.includes(i);
+            const isBooked = bookedSeats.includes(i);
+
+            return (
+              <div
+                key={i}
+                className={`seat 
+                  ${isSelected ? "selected" : ""} 
+                  ${isBooked ? "booked" : ""}`}
+                onClick={() => toggleSeat(i)}
+              >
+                {i + 1}
+              </div>
+            );
+          })}
         </div>
 
         <button className="btn-primary" onClick={confirmBooking}>
