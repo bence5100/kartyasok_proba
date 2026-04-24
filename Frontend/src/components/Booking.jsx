@@ -70,7 +70,7 @@ function Booking() {
         <p>{movie} - {time}</p>
 
         <div className="seats">
-          {Array.from({ length: 40 }).map((_, i) => {
+          {Array.from({ length: 100 }).map((_, i) => {
             const isSelected = selectedSeats.includes(i);
             const isBooked = bookedSeats.includes(i);
 
