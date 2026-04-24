@@ -23,7 +23,7 @@ function MovieDetails() {
   const selectTime = (time) => {
     setSelectedTime(time);
     setTimeout(() => {
-      navigate("/booking", { state: { movie: movie.title, time } });
+      navigate("/booking", { state: { movieId: movie.id, time } }); // ✅ EZ A FIX
     }, 200);
   };
 
