@@ -48,6 +48,9 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
         "currency": "HUF",
     }
     
+
+
+
         
 @router.post("/verfiy/{booking_id}")
 def verify_payment(booking_id: int, db: Session = Depends(get_db)):
@@ -70,6 +73,9 @@ def verify_payment(booking_id: int, db: Session = Depends(get_db)):
         "qr_code_key": booking_record.qr_code_key
     }
     
+
+
+
 @router.get("/status/{booking_id}")
 def get_payment_status(booking_id: int, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
@@ -86,6 +92,9 @@ def get_payment_status(booking_id: int, db: Session = Depends(get_db)):
         "qr_code_content": booking_record.qr_code_key # Ebből rajzol a Frontend QR-t
     }
     
+
+
+
 @router.post("/initiate-cash/{booking_id}")
 def initiate_cash_payment(booking_id: int, db: Session = Depends(get_db)):
     """
@@ -101,6 +110,9 @@ def initiate_cash_payment(booking_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Foglalás rögzítve. Kérjük, fizesse ki a pénztárnál!"}
+
+
+
 
 @router.post("/admin/confirm-cash/{booking_id}")
 def admin_confirm_cash(booking_id: int, db: Session = Depends(get_db)):
@@ -120,12 +132,7 @@ def admin_confirm_cash(booking_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "message": "Készpénzes fizetés rögzítve, jegy érvényesítve!"}
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from models import SessionLocal, Booking
-from secret import generate_ticket_key
 
-router = APIRouter(prefix="/payment", tags=["Payment"])
 
 @router.post("/simulate-card/{booking_id}")
 def simulate_card_payment(booking_id: int, card_number: str, db: Session = Depends(get_db)):

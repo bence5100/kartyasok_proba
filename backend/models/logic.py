@@ -107,7 +107,7 @@ def create_booking_logic(data, db: Session):
         Booking.showtime_id == selected_showtime.id
     ).all()
 
-    taken_seats = {booking.seat_id for booking in existing_bookings}
+    taken_seats = {booking.seat_id for booking in existing_bookings}        ##TODO ??
 
     for seat in data.seats:
         if str(seat) in taken_seats:
@@ -118,7 +118,7 @@ def create_booking_logic(data, db: Session):
 
     for seat in data.seats:
         booking = Booking(
-            user_id=1,
+            user_id=1,              ##TODO jo ez igy =1?-re
             showtime_id=selected_showtime.id,
             seat_id=str(seat),
             ticket_type="full price"
