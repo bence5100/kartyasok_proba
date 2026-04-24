@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models.models import Sessionmaker, Booking, Showtime, Movie
-from models.secret import generate_ticket_key
+from models import Sessionmaker, Booking, Showtime, Movie
+from secret import generate_ticket_key
 
 
 router = APIRouter(prefix="/payment", tags=["payment"])
@@ -132,6 +132,8 @@ def admin_confirm_cash(booking_id: int, db: Session = Depends(get_db)):
     
     db.commit()
     return {"status": "success", "message": "Készpénzes fizetés rögzítve, jegy érvényesítve!"}
+
+
 
 
 
