@@ -3,39 +3,57 @@ import { useState, useEffect } from "react";
 
 function Booking() {
   const location = useLocation();
-
-  console.log("STATE:", location.state);
-
   const { movieId, time } = location.state || {};
 
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [bookedSeats, setBookedSeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // 🪑 FOGLALT HELYEK BETÖLTÉSE
   useEffect(() => {
     if (!movieId || !time) return;
 
-    fetch(`http://localhost:8000/seats/${movieId}/${time}`)
-      .then(res => res.json())
-      .then(data => setBookedSeats(data))
-      .catch(err => console.error(err));
+    const loadSeats = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/seats/${movieId}/${time}`);
+
+        if (!res.ok) {
+          throw new Error("Nem sikerült betölteni a helyeket");
+        }
+
+        const data = await res.json();
+        setBookedSeats(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSeats();
   }, [movieId, time]);
 
   // 🧠 SEAT KATTINTÁS
   const toggleSeat = (index) => {
     if (bookedSeats.includes(index)) return;
 
-    if (selectedSeats.includes(index)) {
-      setSelectedSeats(selectedSeats.filter(s => s !== index));
-    } else {
-      setSelectedSeats([...selectedSeats, index]);
-    }
+    setSelectedSeats(prev => 
+      prev.includes(index)
+        ? prev.filter(s => s !== index)
+        : [...prev, index]
+    );
   };
 
   // 🎟️ FOGLALÁS
   const confirmBooking = async () => {
+    if (selectedSeats.length === 0) {
+      alert("Válassz ki legalább egy helyet!");
+      return;
+    }
+
     try {
-      await fetch("http://localhost:8000/booking", {
+      const res = await fetch("http://localhost:8000/booking", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -47,12 +65,15 @@ function Booking() {
         })
       });
 
+      if (!res.ok) {
+        throw new Error("Foglalás sikertelen");
+      }
+
       alert("Foglalás sikeres!");
       setSelectedSeats([]);
 
     } catch (err) {
-      console.error(err);
-      alert("Hiba történt!");
+      alert(err.message);
     }
   };
 
@@ -60,6 +81,9 @@ function Booking() {
   if (!movieId || !time) {
     return <h1>Hiányzó adatok</h1>;
   }
+
+  if (loading) return <h1>Betöltés...</h1>;
+  if (error) return <h1>{error}</h1>;
 
   return (
     <div>
