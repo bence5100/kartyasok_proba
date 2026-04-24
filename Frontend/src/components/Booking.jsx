@@ -59,7 +59,7 @@ function Booking() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          movie_id: movieId,
+          movieId: Number(movieId),
           time: time,
           seats: selectedSeats
         })
