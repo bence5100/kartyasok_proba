@@ -3,16 +3,21 @@ from sqlalchemy.orm import Session
 
 from models.models import User, Movie, Showtime, Booking
 
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def register_user(data, db: Session):
     existing_user = db.query(User).filter(User.username == data.username).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
 
+    hashed_password = pwd_context.hash(data.password)
+
     user = User(
         username=data.username,
         email=data.email,
-        hashed_password=data.password
+        hashed_password=hashed_password
     )
 
     db.add(user)
@@ -20,11 +25,13 @@ def register_user(data, db: Session):
 
     return {"message": "User created"}
 
-
 def login_user(data, db: Session):
     user = db.query(User).filter(User.username == data.username).first()
 
-    if not user or user.hashed_password != data.password:
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    if not pwd_context.verify(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {
@@ -35,7 +42,6 @@ def login_user(data, db: Session):
             "username": user.username
         }
     }
-
 
 def get_movies_logic(db: Session):
     movies = db.query(Movie).all()
