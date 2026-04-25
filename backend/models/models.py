@@ -2,9 +2,15 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateT
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import datetime
+import os
 
 # 1. adatbázis elérés (SQLite fálj)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./mozi.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+db_path = os.path.join(BASE_DIR, "mozi.db")
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
+
+
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 Sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=engine)

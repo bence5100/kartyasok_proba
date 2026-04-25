@@ -1,94 +1,91 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models.models import Sessionmaker, Booking, Showtime, Movie
-from models.secret import generate_ticket_key
-
+from models import Sessionmaker, Booking, Showtime, Movie
+from secret import generate_ticket_key
 
 router = APIRouter(prefix="/payment", tags=["payment"])
-
-
 def get_db():
     db = Sessionmaker()
     try:
         yield db
     finally:
         db.close()
-
-
+        
 @router.post("/checkout/{booking_id}")
 def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
     # Implementation for checkout
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
-
-    Showtime_record = (
-        db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
-    )
-
-    discounts = {"full price": 1.0, "student": 0.8, "senior": 0.75, "child": 0.5}
-
+    
+    Showtime_record = db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
+    
+    
+    
+    discounts = {
+        "full price": 1.0,
+        "student": 0.8,
+        "senior": 0.75,
+        "child": 0.5
+    }
+    
     multiplier = discounts.get(booking_record.ticket_type, 1.0)
     final_price = Showtime_record.price * booking_record.seats_booked
-
+    
     if Booking.is_vip_seat:
-        final_price += 500.0  # VIP helyek 50%-kal drágábbak
-
+        final_price += 500.0 # VIP helyek 50%-kal drágábbak
+        
+    
+        
     Booking.total_price = final_price
     Booking.ticket_type = ticket_type
     db.commit()
-
-    return {
+    
+    return{
         "booking_id": booking_id,
         "final_price": final_price,
         "type": ticket_type,
         "currency": "HUF",
     }
-
-
+    
+        
 @router.post("/verfiy/{booking_id}")
 def verify_payment(booking_id: int, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
-
+    
     if booking_record.is_paid:
-        return {
-            "status": "already paid",
-            "message": "This booking has already been paid.",
-        }
-
+        return {"status": "already paid","message": "This booking has already been paid."}
+    
+    
     booking_record.is_paid = True
     booking_record.qr_code_key = generate_ticket_key()
     db.commit()
     db.refresh(booking_record)
-
+    
     return {
         "status": "success",
         "message": "Payment verified successfully.",
-        "qr_code_key": booking_record.qr_code_key,
+        "qr_code_key": booking_record.qr_code_key
     }
-
-
+    
 @router.get("/status/{booking_id}")
 def get_payment_status(booking_id: int, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    Showtime_record = (
-        db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
-    )
+    Showtime_record = db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
     movie = db.query(Movie).filter(Movie.id == Showtime_record.movie_id).first()
     return {
         "movie_title": movie.title,
         "time": Showtime_record.start_time,
         "seat": booking_record.seat_id,
         "type": booking_record.ticket_type,
-        "qr_code_content": booking_record.qr_code_key,  # Ebből rajzol a Frontend QR-t
+        "qr_code_content": booking_record.qr_code_key # Ebből rajzol a Frontend QR-t
     }
-
-
+    
 @router.post("/initiate-cash/{booking_id}")
 def initiate_cash_payment(booking_id: int, db: Session = Depends(get_db)):
     """
@@ -100,11 +97,10 @@ def initiate_cash_payment(booking_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Foglalás nem található")
 
     booking.payment_method = "cash"
-    booking.is_paid = False  # Fontos: Még nem fizetett!
+    booking.is_paid = False # Fontos: Még nem fizetett!
     db.commit()
 
     return {"message": "Foglalás rögzítve. Kérjük, fizesse ki a pénztárnál!"}
-
 
 @router.post("/admin/confirm-cash/{booking_id}")
 def admin_confirm_cash(booking_id: int, db: Session = Depends(get_db)):
@@ -113,58 +109,66 @@ def admin_confirm_cash(booking_id: int, db: Session = Depends(get_db)):
     amikor a kezébe kapta a papírpénzt.
     """
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
-
+    
     if not booking:
         raise HTTPException(status_code=404, detail="Nincs ilyen foglalás")
-
+    
     # Itt történik a jóváhagyás
     booking.is_paid = True
-    booking.qr_code_key = generate_ticket_key()  # Csak most kap jegykódot!
-
+    booking.qr_code_key = generate_ticket_key() # Csak most kap jegykódot!
+    
     db.commit()
-    return {
-        "status": "success",
-        "message": "Készpénzes fizetés rögzítve, jegy érvényesítve!",
-    }
+    return {"status": "success", "message": "Készpénzes fizetés rögzítve, jegy érvényesítve!"}
 
 
 @router.post("/simulate-card/{booking_id}")
-def simulate_card_payment(
-    booking_id: int, card_number: str, db: Session = Depends(get_db)
-):
+def simulate_card_payment(booking_id: int, card_number: str, db: Session = Depends(get_db)):
     """
-    Szimulált fizetés:
+    Szimulált fizetés: 
     - Páros végű kártyaszám -> SIKER
     - Páratlan végű kártyaszám -> HIBA
     """
+    
+    clean_card_number = card_number.replace(" ", "")
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
-
+    
     if not booking:
         raise HTTPException(status_code=404, detail="Foglalás nem található")
 
-    # 1. ELLENŐRZÉS: Megnézzük az utolsó karaktert
-    try:
-        last_digit = int(card_number[-1])  # Az utolsó karaktert számmá alakítjuk
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Érvénytelen kártyaszám formátum!")
-
-    # 2. LOGIKA: Ha páratlan (osztva 2-vel a maradék nem 0)
-    if last_digit % 2 != 0:
-        # Itt nem mentünk semmit, csak hibát dobunk
+    
+   # 1. ELLENŐRZÉS: Csak számokból áll-e?
+    if not clean_card_number.isdigit():
         raise HTTPException(
-            status_code=402,
-            detail="Fizetés elutasítva: Páratlan kártyaszám (Szimulált hiba)",
+            status_code=400, 
+            detail="Érvénytelen formátum: A kártyaszám csak számokat tartalmazhat!"
+        )
+        
+        # 3. ELLENŐRZÉS: Elég hosszú-e? (A legtöbb bankkártya 13-19 számjegy)
+    if len(clean_card_number) < 13 or len(clean_card_number) > 19:
+        raise HTTPException(
+            status_code=400, 
+            detail="Érvénytelen kártyaszám: Túl rövid vagy túl hosszú!"
+        )
+    
+    
+
+    # 4. LOGIKA: Ha páratlan (osztva 2-vel a maradék nem 0)
+    last_digit = int(clean_card_number[-1])
+    if last_digit % 2 != 0:
+        raise HTTPException(
+            status_code=402, 
+            detail="Fizetés elutasítva: Páratlan kártyaszám!"
         )
 
     # 3. SIKER: Ha páros
     booking.is_paid = True
     booking.payment_method = "card_simulated"
     booking.qr_code_key = generate_ticket_key()
-
+    
     db.commit()
-
+    
     return {
         "status": "success",
         "message": f"Sikeres fizetés a(z) ...{card_number[-4:]} kártyával!",
-        "ticket_key": booking.qr_code_key,
+        "ticket_key": booking.qr_code_key
     }
