@@ -5,6 +5,7 @@ body {
     color: white;
 }
 
+/* NAVBAR */
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -18,8 +19,49 @@ body {
     font-size: 22px;
     font-weight: bold;
     letter-spacing: 2px;
+    cursor: pointer;
 }
 
+/* 🔥 NAV BUTTON CONTAINER */
+.nav-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* 🔥 BASE BUTTON STYLE (EZ ÜTI FELÜL A BÖNGÉSZŐ DEFAULTOT) */
+.nav-buttons button {
+    padding: 10px 18px;
+    border-radius: 25px;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+/* HOVER */
+.nav-buttons button:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.05);
+}
+
+/* SPECIFIKUS CLASS (ha használod) */
+.nav-btn {
+    background: rgba(255,255,255,0.08);
+}
+
+/* ADMIN KIEMELVE */
+.nav-btn.admin {
+    background: linear-gradient(45deg, #ff4b2b, #ff416c);
+}
+
+.nav-btn.admin:hover {
+    box-shadow: 0 0 10px rgba(255,75,43,0.7);
+}
+
+/* LOGIN / LOGOUT */
 .btn-outline {
     padding: 10px 20px;
     border-radius: 25px;
@@ -36,6 +78,7 @@ body {
     box-shadow: 0 0 10px rgba(0,198,255,0.7);
 }
 
+/* HERO */
 .hero {
     text-align: center;
     padding: 80px 20px 40px;
@@ -50,6 +93,7 @@ body {
     opacity: 0.8;
 }
 
+/* CONTENT */
 .content {
     padding: 30px 60px;
 }
@@ -70,12 +114,10 @@ body {
   overflow: hidden;
 }
 
-
 .movie.card:hover {
   transform: translateY(-10px) scale(1.03);
   box-shadow: 0 15px 30px rgba(0,0,0,0.6);
 }
-
 
 .movie.card::before {
   content: "";
@@ -95,38 +137,17 @@ body {
     margin-bottom: 30px;
 }
 
-.time-card.active {
-  background: #00c6ff;
-  color: black;
-}
-
+/* MODAL */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
   display: flex;
   justify-content: center;
   align-items: center;
-
   background: rgba(0,0,0,0.8);
-}
-
-.modal-content {
-    background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
-    padding: 30px;
-    border-radius: 15px;
-    width: 340px;
-}
-
-.switch-btn {
-    margin-top: 10px;
-    background: none;
-    border: none;
-    color: #00c6ff;
-    cursor: pointer;
 }
 
 .modal-content {
@@ -134,7 +155,6 @@ body {
   padding: 30px;
   border-radius: 15px;
   width: 340px;
-
   animation: popup 0.3s ease;
 }
 
@@ -167,10 +187,6 @@ body {
   transition: all 0.25s ease;
 }
 
-.modal-form input::placeholder {
-  color: rgba(255,255,255,0.5);
-}
-
 .modal-form input:focus {
   border: 1px solid #00c6ff;
   box-shadow: 0 0 8px rgba(0,198,255,0.6);
@@ -194,23 +210,6 @@ body {
   box-shadow: 0 0 12px rgba(0,198,255,0.7);
 }
 
-.switch-btn {
-  text-align: center;
-  margin-top: 5px;
-  font-size: 13px;
-  opacity: 0.8;
-}
-
-.switch-btn:hover {
-  color: #00c6ff;
-  opacity: 1;
-}
-
-.modal-header h2 {
-  text-align: center;
-  margin-bottom: 10px;
-}
-
 .close {
     position: absolute;
     top: 10px;
@@ -220,11 +219,7 @@ body {
     cursor: pointer;
 }
 
-.close:hover {
-    color: #ff4b2b;
-    transform: scale(1.2);
-}
-
+/* SEATS */
 .seats {
     display: grid;
     grid-template-columns: repeat(8, 50px);
@@ -242,10 +237,6 @@ body {
     transition: 0.2s;
 }
 
-.seat:hover {
-    background: #777;
-}
-
 .seat.selected {
     background: #00c6ff;
 }
@@ -255,6 +246,7 @@ body {
     cursor: not-allowed;
 }
 
+/* TIMES */
 .times-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
