@@ -43,6 +43,7 @@ function Home() {
     loadMovies();
   }, []);
 
+  // 🔐 LOGIN
   const login = async (e) => {
     e.preventDefault();
 
@@ -64,10 +65,41 @@ function Home() {
         setIsLoggedIn(true);
       }
 
-      alert("Login OK");
+      alert("Sikeres bejelentkezés!");
       closeLogin();
     } catch {
       alert("Hiba login");
+    }
+  };
+
+  // 🆕 REGISTER
+  const register = async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const username = formData.get("username");
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const password2 = formData.get("password2");
+
+    if (password !== password2) {
+      alert("A jelszavak nem egyeznek!");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/register", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ username, email, password })
+      });
+
+      if (!res.ok) throw new Error();
+
+      alert("Sikeres regisztráció!");
+      setIsLogin(true);
+    } catch {
+      alert("Hiba regisztráció");
     }
   };
 
@@ -78,7 +110,11 @@ function Home() {
 
   return (
     <>
-      <Navbar />
+      <Navbar
+        isLoggedIn={isLoggedIn}
+        onLoginClick={openLogin}
+        onLogout={logout}
+      />
 
       <section className="hero">
         <h1>Foglalj jegyet egyszerűen</h1>
@@ -106,16 +142,52 @@ function Home() {
         )}
       </main>
 
+      {/* 🔥 MODAL */}
       {showModal && (
         <div className="modal">
           <div className="modal-content">
-            <h2>Bejelentkezés</h2>
 
-            <form className="modal-form" onSubmit={login}>
-              <input name="username" placeholder="Felhasználónév" />
-              <input name="password" type="password" placeholder="Jelszó" />
-              <button className="btn-primary">Belépés</button>
-            </form>
+            {/* ❌ CLOSE GOMB */}
+            <span className="close" onClick={closeLogin}>
+              &times;
+            </span>
+
+            <h2>{isLogin ? "Bejelentkezés" : "Regisztráció"}</h2>
+
+            {isLogin ? (
+              <form className="modal-form" onSubmit={login}>
+                <input name="username" placeholder="Felhasználónév" required />
+                <input name="password" type="password" placeholder="Jelszó" required />
+
+                <button className="btn-primary">Belépés</button>
+
+                <button
+                  type="button"
+                  className="switch-btn"
+                  onClick={() => setIsLogin(false)}
+                >
+                  Nincs fiókod? Regisztráció
+                </button>
+              </form>
+            ) : (
+              <form className="modal-form" onSubmit={register}>
+                <input name="username" placeholder="Név" required />
+                <input name="email" type="email" placeholder="Email" required />
+                <input name="password" type="password" placeholder="Jelszó" required />
+                <input name="password2" type="password" placeholder="Jelszó újra" required />
+
+                <button className="btn-primary">Regisztráció</button>
+
+                <button
+                  type="button"
+                  className="switch-btn"
+                  onClick={() => setIsLogin(true)}
+                >
+                  Van fiókod? Bejelentkezés
+                </button>
+              </form>
+            )}
+
           </div>
         </div>
       )}

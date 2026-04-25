@@ -274,3 +274,19 @@ body {
   background: #00c6ff;
   color: black;
 }
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #aaa;
+  transition: 0.2s;
+}
+
+.close:hover {
+  color: #ff4b2b;
+  transform: scale(1.2);
+}

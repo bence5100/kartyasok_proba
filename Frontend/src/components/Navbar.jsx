@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-function Navbar() {
+function Navbar({ isLoggedIn, onLoginClick, onLogout }) {
   const navigate = useNavigate();
 
   return (
@@ -17,6 +17,16 @@ function Navbar() {
         <button className="nav-btn admin" onClick={() => navigate("/admin")}>
           Admin
         </button>
+
+        {!isLoggedIn ? (
+          <button className="btn-outline" onClick={onLoginClick}>
+            Bejelentkezés
+          </button>
+        ) : (
+          <button className="btn-outline" onClick={onLogout}>
+            Kijelentkezés
+          </button>
+        )}
       </nav>
     </header>
   );
