@@ -1,8 +1,10 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 function Booking() {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const { movieId, time } = location.state || {};
 
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -38,14 +40,14 @@ function Booking() {
   const toggleSeat = (index) => {
     if (bookedSeats.includes(index)) return;
 
-    setSelectedSeats(prev => 
+    setSelectedSeats(prev =>
       prev.includes(index)
         ? prev.filter(s => s !== index)
         : [...prev, index]
     );
   };
 
-  // 🎟️ FOGLALÁS
+  // 🎟️ FOGLALÁS + PAYMENT + QR
   const confirmBooking = async () => {
     if (selectedSeats.length === 0) {
       alert("Válassz ki legalább egy helyet!");
@@ -53,6 +55,7 @@ function Booking() {
     }
 
     try {
+      // 1️⃣ BOOKING
       const res = await fetch("http://localhost:8000/booking", {
         method: "POST",
         headers: {
@@ -65,12 +68,33 @@ function Booking() {
         })
       });
 
+      const bookingData = await res.json();
+
       if (!res.ok) {
         throw new Error("Foglalás sikertelen");
       }
 
+      // 2️⃣ PAYMENT VERIFY
+      const verifyRes = await fetch(
+        `http://localhost:8000/payment/verify/${bookingData.booking_id}`,
+        { method: "POST" }
+      );
+
+      const verifyData = await verifyRes.json();
+
+      if (!verifyRes.ok) {
+        throw new Error("Fizetés ellenőrzés sikertelen");
+      }
+
+      // 3️⃣ QR KEY MENTÉS
+      if (verifyData.qr_code_key) {
+        localStorage.setItem("qr", verifyData.qr_code_key);
+      }
+
       alert("Foglalás sikeres!");
-      setSelectedSeats([]);
+
+      // 4️⃣ NAVIGATE USER OLDALRA
+      navigate("/my-bookings");
 
     } catch (err) {
       alert(err.message);
