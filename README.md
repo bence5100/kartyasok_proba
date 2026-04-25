@@ -5,10 +5,13 @@
 Basic information for developers
 
 Starting the server:
+`npm install qrcode.react`
 --
 ```cmd
 uv run uvicorn app.main:app --reload
 python -m uvicorn main:app --reload
+
+npm run dev
 ```
 Example requests:
 

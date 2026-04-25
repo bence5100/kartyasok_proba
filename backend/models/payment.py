@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Sessionmaker, Booking, Showtime, Movie
-from secret import generate_ticket_key
+from models.models import Sessionmaker, Booking, Showtime, Movie
+from models.secret import generate_ticket_key
 
 router = APIRouter(prefix="/payment", tags=["payment"])
 def get_db():
