@@ -42,7 +42,5 @@ def create_booking(data: BookingRequest, db: Session = Depends(get_db)):
     return create_booking_logic(data, db)
 
 ### TODO -router.get("/rooms/{room_id}") - get room details, including seating arrangement
-### TODO -router.get("/user")
 ### TODO - minden táblára get-er és tábla/id -get-ter
-### TODO - router.post("/bookings/") -- Admin oldalon meg erösíteni, hogy ki van-e  fizetve
-### TODO - router.post("/bookings/") -- Fizetés közbenre
+### TODO --registrácio müködik e
