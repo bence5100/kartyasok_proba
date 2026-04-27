@@ -1,0 +1,10 @@
+node_modules
+Frontend/node_modules
+backend/venv
+backend/__pycache__
+backend/**/__pycache__
+*.pyc
+.git
+.gitignore
+.env
+.DS_Store
