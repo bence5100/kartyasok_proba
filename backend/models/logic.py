@@ -50,7 +50,8 @@ def get_movies_logic(db: Session):
         {
             "id": movie.id,
             "title": movie.title,
-            "description": movie.description
+            "poster_url": movie.poster_url
+            
         }
         for movie in movies
     ]
@@ -68,6 +69,15 @@ def get_movie_logic(movie_id: int, db: Session):
         "id": movie.id,
         "title": movie.title,
         "description": movie.description,
+        "poster_url": movie.poster_url,
+        "duration": movie.duration_minutes,
+        "genre": movie.genre,
+        "age_limit": movie.age_limit,
+        "language": movie.language,
+        "subtitle": movie.subtitles,
+        "rating": movie.rating,
+        "url": movie.trailer_url,
+        
         "times": [s.start_time.strftime("%H:%M") for s in showtimes]
     }
 

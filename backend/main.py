@@ -9,7 +9,9 @@ from models.models import Base, engine
 from api.router import router
 
 
+
 app = FastAPI(title="Absolute Cinema API")
+
 
 # Create Database Connection
 Base.metadata.create_all(bind=engine)
