@@ -43,7 +43,7 @@ function Home() {
     loadMovies();
   }, []);
 
-  // 🔐 LOGIN
+  // 🔐 LOGIN (FIXED)
   const login = async (e) => {
     e.preventDefault();
 
@@ -60,8 +60,9 @@ function Home() {
 
       const data = await res.json();
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
+      // 🔥 EZ VOLT A HIBA
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
         setIsLoggedIn(true);
       }
 
@@ -72,7 +73,7 @@ function Home() {
     }
   };
 
-  // 🆕 REGISTER
+  // 🆕 REGISTER (FIXED)
   const register = async (e) => {
     e.preventDefault();
 
@@ -94,10 +95,16 @@ function Home() {
         body: JSON.stringify({ username, email, password })
       });
 
-      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      // 🔥 AUTO LOGIN REGISTER UTÁN
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
+        setIsLoggedIn(true);
+      }
 
       alert("Sikeres regisztráció!");
-      setIsLogin(true);
+      closeLogin();
     } catch {
       alert("Hiba regisztráció");
     }
@@ -147,7 +154,6 @@ function Home() {
         <div className="modal">
           <div className="modal-content">
 
-            {/* ❌ CLOSE GOMB */}
             <span className="close" onClick={closeLogin}>
               &times;
             </span>
