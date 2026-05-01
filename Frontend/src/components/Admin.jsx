@@ -46,7 +46,7 @@ function Admin() {
       ) : (
         bookings.map((b, i) => (
           <div key={i} className="card">
-            <h3>{b.movie_title}</h3>
+            <h3>{b.movie}</h3>
             <p>{b.time}</p>
             <p>Seat: {b.seat}</p>
             <p>Type: {b.type}</p>
