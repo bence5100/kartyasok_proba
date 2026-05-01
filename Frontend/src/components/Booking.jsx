@@ -11,9 +11,10 @@ function Booking() {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // 🔥 NEW: payment modal state
   const [showPayment, setShowPayment] = useState(false);
   const [paymentType, setPaymentType] = useState("");
+
+  const [bookingId, setBookingId] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -28,7 +29,62 @@ function Booking() {
     );
   };
 
-  // 🔥 FOGLALÁS FUNKCIÓ (MÓDOSÍTVA: paymentType is megy)
+  // 🔥 1. BOOKING LÉTREHOZÁS
+  const createBooking = async () => {
+    const res = await fetch("http://localhost:8000/booking", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: JSON.stringify({
+        movieId,
+        time,
+        seats: selectedSeats
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) throw new Error();
+
+    return data.booking_id;
+  };
+
+  // 🔥 2. CHECKOUT
+  const checkout = async (bookingId) => {
+    const res = await fetch(`http://localhost:8000/payment/checkout/${bookingId}`, {
+      method: "POST"
+    });
+
+    const data = await res.json();
+    return data;
+  };
+
+  // 🔥 3. FIZETÉS
+  const pay = async (bookingId) => {
+    const res = await fetch(`http://localhost:8000/payment/pay/${bookingId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        payment_type: paymentType
+      })
+    });
+
+    const data = await res.json();
+    return data;
+  };
+
+  // 🔥 4. VERIFY
+  const verify = async (bookingId) => {
+    await fetch(`http://localhost:8000/payment/verify/${bookingId}`, {
+      method: "POST"
+    });
+  };
+
+  // 🔥 FULL FLOW
   const handleBooking = async () => {
     if (!isLoggedIn) {
       alert("Először jelentkezz be!");
@@ -47,32 +103,31 @@ function Booking() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/booking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        },
-        body: JSON.stringify({
-          movieId,
-          time,
-          seats: selectedSeats,
-          payment_type: paymentType
-        })
-      });
+      const id = await createBooking();
+      setBookingId(id);
 
-      if (!res.ok) throw new Error();
+      await checkout(id);
 
-      alert("Foglalás sikeres!");
+      const payRes = await pay(id);
+
+      if (paymentType === "card") {
+        alert(`Kártyás fizetés OK\nTicket: ${payRes.ticket_key}`);
+      } else {
+        alert("Készpénzes fizetés rögzítve!");
+      }
+
+      await verify(id);
+
+      alert("Foglalás véglegesítve!");
       setShowPayment(false);
       navigate("/my-bookings");
 
-    } catch {
-      alert("Hiba foglalás közben");
+    } catch (err) {
+      console.error(err);
+      alert("Hiba a folyamatban");
     }
   };
 
-  // 🔥 NEW: megnyitja a payment modalt
   const openPayment = () => {
     if (!isLoggedIn) {
       alert("Először jelentkezz be!");
@@ -107,13 +162,11 @@ function Booking() {
           ))}
         </div>
 
-        {/* 🔥 FOGLALÁS GOMB (MOST MODALT NYIT) */}
         <button className="btn-primary" onClick={openPayment}>
           Foglalás
         </button>
       </section>
 
-      {/* 🔥 PAYMENT MODAL */}
       {showPayment && (
         <div className="modal">
           <div className="modal-content">
@@ -124,31 +177,18 @@ function Booking() {
 
             <h2>Fizetés</h2>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "20px" }}>
-              
-              <button
-                className={`btn-primary ${paymentType === "cash" ? "active" : ""}`}
-                onClick={() => setPaymentType("cash")}
-              >
-                💵 Készpénz
-              </button>
+            <button onClick={() => setPaymentType("cash")}>
+              💵 Készpénz
+            </button>
 
-              <button
-                className={`btn-primary ${paymentType === "card" ? "active" : ""}`}
-                onClick={() => setPaymentType("card")}
-              >
-                💳 Bankkártya
-              </button>
+            <button onClick={() => setPaymentType("card")}>
+              💳 Bankkártya
+            </button>
 
-              <button
-                className="btn-primary"
-                onClick={handleBooking}
-                style={{ marginTop: "20px" }}
-              >
-                Fizetés és foglalás
-              </button>
+            <button onClick={handleBooking}>
+              Fizetés és foglalás
+            </button>
 
-            </div>
           </div>
         </div>
       )}
