@@ -8,12 +8,19 @@ function Home() {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false); // 🔥 ÚJ
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+
     setIsLoggedIn(!!token);
+
+    if (user?.username === "admin") {
+      setIsAdmin(true);
+    }
   }, []);
 
   const openLogin = () => {
@@ -43,7 +50,7 @@ function Home() {
     loadMovies();
   }, []);
 
-  // 🔐 LOGIN (FIXED)
+  // 🔐 LOGIN
   const login = async (e) => {
     e.preventDefault();
 
@@ -60,10 +67,15 @@ function Home() {
 
       const data = await res.json();
 
-      // 🔥 EZ VOLT A HIBA
       if (data.access_token) {
         localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user)); // 🔥
+
         setIsLoggedIn(true);
+
+        if (data.user?.username === "admin") {
+          setIsAdmin(true);
+        }
       }
 
       alert("Sikeres bejelentkezés!");
@@ -73,7 +85,7 @@ function Home() {
     }
   };
 
-  // 🆕 REGISTER (FIXED)
+  // 🆕 REGISTER
   const register = async (e) => {
     e.preventDefault();
 
@@ -97,10 +109,15 @@ function Home() {
 
       const data = await res.json();
 
-      // 🔥 AUTO LOGIN REGISTER UTÁN
       if (data.access_token) {
         localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user)); // 🔥
+
         setIsLoggedIn(true);
+
+        if (data.user?.username === "admin") {
+          setIsAdmin(true);
+        }
       }
 
       alert("Sikeres regisztráció!");
@@ -112,13 +129,16 @@ function Home() {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user"); // 🔥
     setIsLoggedIn(false);
+    setIsAdmin(false); // 🔥
   };
 
   return (
     <>
       <Navbar
         isLoggedIn={isLoggedIn}
+        isAdmin={isAdmin} // 🔥
         onLoginClick={openLogin}
         onLogout={logout}
       />
@@ -149,7 +169,6 @@ function Home() {
         )}
       </main>
 
-      {/* 🔥 MODAL */}
       {showModal && (
         <div className="modal">
           <div className="modal-content">
