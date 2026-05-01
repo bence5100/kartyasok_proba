@@ -92,11 +92,11 @@ function MovieDetails() {
         )}
 
         <p>{movie.duration} perc</p>
-        <p>{movie.description}</p>
-        <p>{movie.genre}</p>
-        <p>{movie.age_limit}+ év</p>
-        <p>{movie.language}</p>
-        <p>{movie.subtitle}</p>
+        <p>Leírás:{movie.description}</p>
+        <p>Zsáner:{movie.genre}</p>
+        <p>Korhatár:{movie.age_limit}+ év</p>
+        <p>Nyelv:{movie.language}</p>
+        <p> Feliratok:{movie.subtitle}</p>
         <p>Értékelés: {movie.rating}/10</p>
         
       
