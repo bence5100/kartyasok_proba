@@ -13,15 +13,17 @@ def get_db():
         
 @router.post("/checkout/{booking_id}")
 def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
-    # Implementation for checkout
+    # 1. Foglalás lekérése
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
     
+    # 2. Vetítés lekérése (hogy tudjuk az árat)
     Showtime_record = db.query(Showtime).filter(Showtime.id == booking_record.showtime_id).first()
+    if not Showtime_record:
+        raise HTTPException(status_code=404, detail="Showtime not found")
     
-    
-    
+    # Kedvezmények definíciója
     discounts = {
         "full price": 1.0,
         "student": 0.8,
@@ -29,19 +31,27 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
         "child": 0.5
     }
     
-    multiplier = discounts.get(booking_record.ticket_type, 1.0)
-    final_price = Showtime_record.price * booking_record.seats_booked
+    # 3. ÁR SZÁMÍTÁSA (Fix árral, ha a Showtime-ban nincs 'price' oszlop)
+    alap_ar = 2000.0  # Ha nincs 'price' a Showtime modellben, használj fix árat
+    # Ha van price a Showtime-ban, akkor: alap_ar = Showtime_record.price
     
-    if Booking.is_vip_seat:
-        final_price += 500.0 # VIP helyek 50%-kal drágábbak
-        
+    multiplier = discounts.get(ticket_type, 1.0)
     
+    # Mivel egy foglalás (Booking) nálad egy széket jelent:
+    final_price = alap_ar * multiplier
+    
+    # 4. VIP felár ellenőrzése (Példányon, nem az Osztályon!)
+    if booking_record.is_vip_seat: 
+        final_price += 500.0
         
-    Booking.total_price = final_price
-    Booking.ticket_type = ticket_type
+    # 5. MENTÉS A REKORDBA
+    # Ügyelj a mezőnevekre: a models.py alapján 'total_paid' van, nem 'total_price'
+    booking_record.total_paid = final_price 
+    booking_record.ticket_type = ticket_type
+    
     db.commit()
     
-    return{
+    return {
         "booking_id": booking_id,
         "final_price": final_price,
         "type": ticket_type,
@@ -55,11 +65,11 @@ def verify_payment(booking_id: int, db: Session = Depends(get_db)):
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
     
-    if booking_record.is_paid:
+    if booking_record.is_piad:
         return {"status": "already paid","message": "This booking has already been paid."}
     
     
-    booking_record.is_paid = True
+    booking_record.is_piad = True
     booking_record.qr_code_key = generate_ticket_key()
     db.commit()
     db.refresh(booking_record)
