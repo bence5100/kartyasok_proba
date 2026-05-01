@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
-import ReactPlayer from 'react-player';
+
 
 function extractVideoId(url) {
   if (!url) return '';
