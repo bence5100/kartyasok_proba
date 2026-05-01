@@ -11,7 +11,7 @@ function Admin() {
 
     if (!token) return;
 
-    fetch("http://localhost:8000/my-bookings", {
+    fetch("http://localhost:8000/admin/bookings", {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -50,6 +50,7 @@ function Admin() {
             <p>{b.time}</p>
             <p>Seat: {b.seat}</p>
             <p>Type: {b.type}</p>
+            <p>User: {b.user}</p>
           </div>
         ))
       )}
