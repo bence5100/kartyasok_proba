@@ -16,6 +16,12 @@ function Booking() {
 
   const [bookingId, setBookingId] = useState(null);
 
+  // 🔥 NEW: card adatok
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvc, setCvc] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -29,7 +35,7 @@ function Booking() {
     );
   };
 
-  // 🔥 1. BOOKING LÉTREHOZÁS
+  // 🔥 1. BOOKING
   const createBooking = async () => {
     const res = await fetch("http://localhost:8000/booking", {
       method: "POST",
@@ -45,9 +51,7 @@ function Booking() {
     });
 
     const data = await res.json();
-
     if (!res.ok) throw new Error();
-
     return data.booking_id;
   };
 
@@ -57,8 +61,7 @@ function Booking() {
       method: "POST"
     });
 
-    const data = await res.json();
-    return data;
+    return await res.json();
   };
 
   // 🔥 3. FIZETÉS
@@ -73,8 +76,7 @@ function Booking() {
       })
     });
 
-    const data = await res.json();
-    return data;
+    return await res.json();
   };
 
   // 🔥 4. VERIFY
@@ -100,6 +102,14 @@ function Booking() {
     if (!paymentType) {
       alert("Válassz fizetési módot!");
       return;
+    }
+
+    // 🔥 CARD VALIDÁCIÓ
+    if (paymentType === "card") {
+      if (!cardNumber || !cardName || !expiry || !cvc) {
+        alert("Tölts ki minden kártyaadatot!");
+        return;
+      }
     }
 
     try {
@@ -185,7 +195,40 @@ function Booking() {
               💳 Bankkártya
             </button>
 
-            <button onClick={handleBooking}>
+            {/* 🔥 CARD FORM */}
+            {paymentType === "card" && (
+              <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                
+                <input
+                  placeholder="Kártyaszám"
+                  value={cardNumber}
+                  onChange={e => setCardNumber(e.target.value)}
+                  maxLength={16}
+                />
+
+                <input
+                  placeholder="Kártyatulajdonos neve"
+                  value={cardName}
+                  onChange={e => setCardName(e.target.value)}
+                />
+
+                <input
+                  placeholder="Lejárat (MM/YY)"
+                  value={expiry}
+                  onChange={e => setExpiry(e.target.value)}
+                />
+
+                <input
+                  placeholder="CVC"
+                  value={cvc}
+                  onChange={e => setCvc(e.target.value)}
+                  maxLength={3}
+                />
+
+              </div>
+            )}
+
+            <button onClick={handleBooking} style={{ marginTop: "15px" }}>
               Fizetés és foglalás
             </button>
 
