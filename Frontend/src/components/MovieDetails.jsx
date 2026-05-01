@@ -21,17 +21,11 @@ function MovieDetails() {
     fetch(`http://localhost:8000/movies/${id}`)
       .then(res => res.json())
       .then(data =>{
-        console.log("Teljes válasz:", data);
-        console.log("Minden mező:", Object.keys(data));
-        console.log("url mező értéke:", data.url);
         setMovie(data);})
   }, [id]);
 
   if (!movie) return <h1>Betöltés...</h1>;
 
-  console.log("Movie.url értéke rendereléskor:", movie.url);
-  console.log("Van-e url?", !!movie.url);
-  console.log("showTrailer:", showTrailer);
 
   return (
     <div>
@@ -40,17 +34,10 @@ function MovieDetails() {
       <main className="content">
         <h1>{movie.title}</h1>
         <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
-         {/* DEBUG INFO - EZT LÁTNOD KELL A KÉPERNYŐN */}
-        <div style={{ background: '#f0f0f0', padding: '10px', margin: '10px 0' }}>
-          <strong>Debug info:</strong><br />
-          movie.url értéke: {String(movie.url)}<br />
-          típusa: {typeof movie.url}<br />
-          showTrailer: {String(showTrailer)}<br />
-          Van-e link? {movie.url ? "IGEN" : "NEM"}
-        </div>
+         
         
         {/* TRAILER GOMB - mindig látszódik */}
-        <div style={{ margin: '20px 0', padding: '10px', border: '2px solid red' }}>
+        <div style={{ margin: '20px 0', padding: '10px',  }}>
           <button 
             onClick={() => {
               console.log("Gombra kattintottál, showTrailer eddig:", showTrailer);
@@ -71,11 +58,9 @@ function MovieDetails() {
         
         {/* TRAILER CONTENT */}
         {showTrailer && (
-          <div style={{ marginTop: '20px', padding: '20px', border: '2px solid blue' }}>
-            <p>showTrailer TRUE, megjelenítem a trailert</p>
+          <div style={{ marginTop: '20px', padding: '20px', }}>
             {movie.url ? (
               <div>
-                <p>URL létezik: {movie.url}</p>
                 <iframe
                   width="100%"
                   height="400"
