@@ -14,16 +14,24 @@ def register_user(data, db: Session):
 
     hashed_password = pwd_context.hash(data.password)
 
-    user = User(
+    new_user = User(
         username=data.username,
         email=data.email,
         hashed_password=hashed_password
     )
 
-    db.add(user)
+    db.add(new_user)
     db.commit()
+    db.refresh(new_user)
 
-    return {"message": "User created"}
+    return {"message": "User created and logged in",
+            "access_token": f"token_{new_user.id}",
+            "token_type": "bearer",
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username
+            }
+    }
 
 def login_user(data, db: Session):
     user = db.query(User).filter(User.username == data.username).first()
@@ -50,7 +58,8 @@ def get_movies_logic(db: Session):
         {
             "id": movie.id,
             "title": movie.title,
-            "description": movie.description
+            "poster_url": movie.poster_url
+            
         }
         for movie in movies
     ]
@@ -68,7 +77,16 @@ def get_movie_logic(movie_id: int, db: Session):
         "id": movie.id,
         "title": movie.title,
         "description": movie.description,
-        "times": [s.start_time.strftime("%H:%M") for s in showtimes]
+        "poster_url": movie.poster_url,
+        "duration": movie.duration_minutes,
+        "genre": movie.genre,
+        "age_limit": movie.age_limit,
+        "language": movie.language,
+        "subtitle": movie.subtitles,
+        "rating": movie.rating,
+        "url": movie.trailer_url,
+        
+        "times": [s.start_time.strftime("%m-%d %H:%M") for s in showtimes if s.start_time]
     }
 
 

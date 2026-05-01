@@ -135,7 +135,7 @@ function Home() {
                 onClick={() => openMovie(movie.id)}
               >
                 <h3>{movie.title}</h3>
-                <p>{movie.description}</p>
+                <img src={movie.poster_url} alt={movie.title} className="movie-thumb" />
               </div>
             ))}
           </div>
