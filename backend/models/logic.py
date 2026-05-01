@@ -152,3 +152,49 @@ def create_booking_logic(data, db: Session):
     db.commit()
 
     return {"message": "Booking successful"}
+
+def get_user_bookings_logic(user_id: int, db: Session):
+    # Lekérjük a felhasználó összes foglalását a hozzá tartozó film és időpont adatokkal
+    bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
+    
+    return [
+        {
+            "id": b.id,
+            "movie_title": b.showtime.movie.title,
+            "time": b.showtime.start_time.strftime("%m-%d %H:%M"),
+            "seat_id": b.seat_id,
+            "ticket_type": b.ticket_type
+        }
+        for b in bookings
+    ]
+
+def get_all_bookings_admin_logic(db: Session):
+    # Adminnak minden foglalás kell, felhasználónévvel együtt
+    bookings = db.query(Booking).all()
+    
+    return [
+        {
+            "id": b.id,
+            "user": b.user.username,
+            "movie": b.showtime.movie.title,
+            "time": b.showtime.start_time.strftime("%m-%d %H:%M"),
+            "seat": b.seat_id,
+            "type": b.ticket_type
+        }
+        for b in bookings
+    ]
+
+def update_booking_logic(booking_id: int, data: dict, db: Session):
+    # Foglalás adatainak (pl. jegytípus vagy szék) módosítása admin által
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    
+    if "ticket_type" in data:
+        booking.ticket_type = data["ticket_type"]
+    if "seat_id" in data:
+        booking.seat_id = str(data["seat_id"])
+        
+    db.commit()
+    return {"message": "Booking updated successfully"}
