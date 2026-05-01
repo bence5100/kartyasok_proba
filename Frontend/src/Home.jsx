@@ -68,8 +68,8 @@ function Home() {
       const data = await res.json();
 
       if (data.access_token) {
-        localStorage.setItem("token", data.access_token);
-        localStorage.setItem("user", JSON.stringify(data.user)); // 🔥
+        localStorage.setItem("token", result.access_token);
+        localStorage.setItem("user", JSON.stringify(result.user)); // 🔥
 
         setIsLoggedIn(true);
 

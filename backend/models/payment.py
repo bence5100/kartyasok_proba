@@ -59,17 +59,17 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
     }
     
         
-@router.post("/verfiy/{booking_id}")
+@router.post("/verify/{booking_id}")
 def verify_payment(booking_id: int, db: Session = Depends(get_db)):
     booking_record = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking_record:
         raise HTTPException(status_code=404, detail="Booking not found")
     
-    if booking_record.is_piad:
+    if booking_record.is_paid:
         return {"status": "already paid","message": "This booking has already been paid."}
     
     
-    booking_record.is_piad = True
+    booking_record.is_paid = True
     booking_record.qr_code_key = generate_ticket_key()
     db.commit()
     db.refresh(booking_record)

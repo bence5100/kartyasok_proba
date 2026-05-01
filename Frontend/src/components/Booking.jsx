@@ -29,53 +29,62 @@ function Booking() {
 
   if (!movieId || !time) return <h1>Hiányzó adat</h1>;
 
-  const toggleSeat = (i) => {
+  const toggleSeat = (seatNumber) => {
     setSelectedSeats((prev) =>
-      prev.includes(i) ? prev.filter((s) => s !== i) : [...prev, i]
+      prev.includes(seatNumber)
+        ? prev.filter((s) => s !== seatNumber)
+        : [...prev, seatNumber]
     );
   };
 
-  // 🔥 1. FOGLALÁS LÉTREHOZÁSA (Javítva a duplikáció)
+  // 🔥 1. FOGLALÁS LÉTREHOZÁSA
   const createBooking = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
     const userId = user?.id;
 
     if (!userId) {
-        throw new Error("Nem található a felhasználó ID-ja! Jelentkezz be újra.");
+      throw new Error("Nem található a felhasználó ID-ja! Jelentkezz be újra.");
     }
 
     const res = await fetch(`http://localhost:8000/booking`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify({
-        movieId,
-        time,
+        movieId: movieId,
+        time: time,
         seats: selectedSeats,
-        userId: userId // <--- Itt küldjük el a JSON-ben
+        userId: userId,
       }),
     });
 
     if (!res.ok) {
-        // Hogy pontosan lássuk a böngésző konzoljában, mi a baja a backendnek:
-        const errorData = await res.json();
-        console.error("Backend hiba a foglalásnál:", errorData);
-        throw new Error("Hiba a foglalás létrehozásakor");
+      const errorData = await res.json();
+      console.error("Backend hiba a foglalásnál:", errorData);
+      throw new Error(errorData.detail || "Hiba a foglalás létrehozásakor");
     }
-    
+
     const data = await res.json();
-    return data.booking_id; // Visszaadja a létrejött ID-t a fizetéshez
+
+    return data.booking_ids;
   };
 
-  // 🔥 2. CHECKOUT (Ár és jegytípus rögzítése)
+  // 🔥 2. CHECKOUT
   const checkout = async (id) => {
     const res = await fetch(
-      `http://localhost:8000/payment/checkout/${id}?ticket_type=${ticketType}`,
+      `http://localhost:8000/payment/checkout/${id}?ticket_type=${encodeURIComponent(
+        ticketType
+      )}`,
       { method: "POST" }
     );
-    if (!res.ok) throw new Error("Hiba az ár kalkulációjakor");
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || "Hiba az ár kalkulációjakor");
+    }
+
     const data = await res.json();
     console.log("Végleges ár:", data.final_price);
     return data;
@@ -86,9 +95,13 @@ function Booking() {
     let url = "";
 
     if (paymentType === "card") {
-      url = `http://localhost:8000/payment/simulate-card/${id}?card_number=${cardNumber}`;
+      url = `http://localhost:8000/payment/simulate-card/${id}?card_number=${encodeURIComponent(
+        cardNumber
+      )}`;
     } else if (paymentType === "cash") {
       url = `http://localhost:8000/payment/initiate-cash/${id}`;
+    } else {
+      throw new Error("Nincs kiválasztva fizetési mód.");
     }
 
     const res = await fetch(url, {
@@ -104,22 +117,24 @@ function Booking() {
     return await res.json();
   };
 
-  // 🔥 4. VERIFY (Megerősítés)
+  // 🔥 4. VERIFY
   const verify = async (id) => {
     const res = await fetch(`http://localhost:8000/payment/verify/${id}`, {
       method: "POST",
     });
-    if (!res.ok) console.warn("Verify végpont hibát dobott, de a fizetés már lement.");
+
+    if (!res.ok) {
+      console.warn("Verify végpont hibát dobott, de a fizetés már lement.");
+    }
   };
 
-  // 🔥 TELJES FOLYAMAT (Gombnyomásra)
+  // 🔥 TELJES FOLYAMAT
   const handleBooking = async () => {
     if (!paymentType) {
       alert("Válassz fizetési módot!");
       return;
     }
 
-    // Kártya validáció
     if (paymentType === "card") {
       if (!cardNumber || !cardName || !expiry || !cvc) {
         alert("Tölts ki minden kártyaadatot!");
@@ -129,21 +144,27 @@ function Booking() {
 
     try {
       // 1. Foglalás
-      const id = await createBooking();
-      setBookingId(id);
+      const ids = await createBooking();
+      setBookingId(ids);
 
-      // 2. Checkout (Ár beállítása)
-      await checkout(id);
+      let lastPaymentResult = null;
 
-      // 3. Fizetés
-      const payRes = await processPayment(id);
+      for (const id of ids) {
+        await checkout(id);
+        lastPaymentResult = await processPayment(id);
 
-      // 4. Verify (Opcionális, de lefuttatjuk)
-      await verify(id);
+        // Csak kártyás fizetésnél futtatjuk a verify-t
+        if (paymentType === "card") {
+          await verify(id);
+        }
+      }
 
       // Siker üzenetek
       if (paymentType === "card") {
-        alert(`Sikeres kártyás fizetés!\nJegy kód: ${payRes.ticket_key || "N/A"}`);
+        alert(
+          `Sikeres kártyás fizetés!\nJegy kód: ${lastPaymentResult?.ticket_key || "N/A"
+          }`
+        );
       } else {
         alert("Készpénzes fizetés rögzítve! Kérjük, fizesse ki a pénztárnál.");
       }
@@ -162,10 +183,12 @@ function Booking() {
       navigate("/");
       return;
     }
+
     if (selectedSeats.length === 0) {
       alert("Válassz helyet!");
       return;
     }
+
     setShowPayment(true);
   };
 
@@ -177,15 +200,20 @@ function Booking() {
         <h1>Helyfoglalás</h1>
 
         <div className="seats">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div
-              key={i}
-              className={`seat ${selectedSeats.includes(i) ? "selected" : ""}`}
-              onClick={() => toggleSeat(i)}
-            >
-              {i + 1}
-            </div>
-          ))}
+          {Array.from({ length: 40 }).map((_, i) => {
+            const seatNumber = i + 1;
+
+            return (
+              <div
+                key={seatNumber}
+                className={`seat ${selectedSeats.includes(seatNumber) ? "selected" : ""
+                  }`}
+                onClick={() => toggleSeat(seatNumber)}
+              >
+                {seatNumber}
+              </div>
+            );
+          })}
         </div>
 
         <button className="btn-primary" onClick={openPayment}>
@@ -206,7 +234,10 @@ function Booking() {
             {/* Jegytípus választó */}
             <div style={{ marginBottom: "15px" }}>
               <label>Jegytípus: </label>
-              <select value={ticketType} onChange={(e) => setTicketType(e.target.value)}>
+              <select
+                value={ticketType}
+                onChange={(e) => setTicketType(e.target.value)}
+              >
                 <option value="full price">Teljes árú</option>
                 <option value="student">Diák</option>
                 <option value="senior">Nyugdíjas</option>
@@ -214,22 +245,35 @@ function Booking() {
               </select>
             </div>
 
-            <button onClick={() => setPaymentType("cash")} className={paymentType === "cash" ? "selected-btn" : ""}>
+            <button
+              onClick={() => setPaymentType("cash")}
+              className={paymentType === "cash" ? "selected-btn" : ""}
+            >
               💵 Készpénz
             </button>
 
-            <button onClick={() => setPaymentType("card")} className={paymentType === "card" ? "selected-btn" : ""}>
+            <button
+              onClick={() => setPaymentType("card")}
+              className={paymentType === "card" ? "selected-btn" : ""}
+            >
               💳 Bankkártya
             </button>
 
             {/* 🔥 KÁRTYA FORM */}
             {paymentType === "card" && (
-              <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div
+                style={{
+                  marginTop: "15px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
                 <input
                   placeholder="Kártyaszám (Páros = Siker)"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
-                  maxLength={16}
+                  maxLength={19}
                 />
                 <input
                   placeholder="Kártyatulajdonos neve"
@@ -250,7 +294,14 @@ function Booking() {
               </div>
             )}
 
-            <button onClick={handleBooking} style={{ marginTop: "20px", background: "#4CAF50", color: "white" }}>
+            <button
+              onClick={handleBooking}
+              style={{
+                marginTop: "20px",
+                background: "#4CAF50",
+                color: "white",
+              }}
+            >
               Véglegesítés
             </button>
           </div>
