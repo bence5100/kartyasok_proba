@@ -50,3 +50,13 @@ def create_booking(data: BookingRequest, db: Session = Depends(get_db)):
 ### TODO -router.get("/rooms/{room_id}") - get room details, including seating arrangement
 ### TODO - minden táblára get-er és tábla/id -get-ter
 ### TODO --registrácio müködik e
+
+## TODO - bookiing post - admin oldalon adatok változtatása
+## TODO - booking get - admin oldalra azt ami kell
+## TODO booking get - a profil oldalra - minden lefoglalt jegyet megjeleniteni a usernek 
+## TODO:  FRONTEN:
+##TODO:    - müködö bejelentkezés
+##TODO:    - müködö regisztácio
+##TODO:    - müködö payment + oldal
+##TODO:    - müködö profil oldal
+##TODO:    - müködő admin oldal
