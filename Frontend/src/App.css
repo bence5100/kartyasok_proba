@@ -290,3 +290,11 @@ body {
   color: #ff4b2b;
   transform: scale(1.2);
 }
+
+.movie-thumb {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 10px;
+}

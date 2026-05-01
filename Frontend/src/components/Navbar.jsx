@@ -10,9 +10,13 @@ function Navbar({ isLoggedIn, onLoginClick, onLogout }) {
       </div>
 
       <nav className="nav-buttons">
-        <button className="nav-btn" onClick={() => navigate("/my-bookings")}>
-          Foglalásaim
-        </button>
+        
+        {/* 🔒 CSAK LOGIN UTÁN */}
+        {isLoggedIn && (
+          <button className="nav-btn" onClick={() => navigate("/my-bookings")}>
+            Foglalásaim
+          </button>
+        )}
 
         <button className="nav-btn admin" onClick={() => navigate("/admin")}>
           Admin
