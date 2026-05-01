@@ -54,17 +54,10 @@ function Booking() {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
-<<<<<<< HEAD
-          movieId: movie.id,
-          time: selectedTime,
-          seats: selectedSeats,
-          userId: loggedInUser.id
-=======
           movieId,
           time,
           seats: selectedSeats,
-          payment_type: paymentType // 🔥 ÚJ
->>>>>>> 1008ca38fab0446f76e598b3b5b865b67274e744
+          payment_type: paymentType
         })
       });
 
