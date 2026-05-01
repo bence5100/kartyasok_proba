@@ -8,15 +8,15 @@ function Booking() {
 
   const { movieId, time } = location.state || {};
 
+  // --- ÁLLAPOTOK (STATE) ---
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentType, setPaymentType] = useState("");
-
   const [bookingId, setBookingId] = useState(null);
 
-  // 🔥 NEW: card adatok
+  // Fizetéshez tartozó állapotok
+  const [paymentType, setPaymentType] = useState("");
+  const [ticketType, setTicketType] = useState("full price");
   const [cardNumber, setCardNumber] = useState("");
   const [cardName, setCardName] = useState("");
   const [expiry, setExpiry] = useState("");
@@ -30,81 +30,97 @@ function Booking() {
   if (!movieId || !time) return <h1>Hiányzó adat</h1>;
 
   const toggleSeat = (i) => {
-    setSelectedSeats(prev =>
-      prev.includes(i) ? prev.filter(s => s !== i) : [...prev, i]
+    setSelectedSeats((prev) =>
+      prev.includes(i) ? prev.filter((s) => s !== i) : [...prev, i]
     );
   };
 
-  // 🔥 1. BOOKING
   const createBooking = async () => {
-    const res = await fetch("http://localhost:8000/booking", {
+    // 1. Felhasználó adatainak kinyerése
+    const user = JSON.parse(localStorage.getItem("user"));
+    const userId = user?.id;
+
+    if (!userId) {
+        throw new Error("Nem található a felhasználó ID-ja! Jelentkezz be újra.");
+    }
+
+    // 2. Kérés küldése (Itt fűzzük hozzá az URL-hez a userId-t!)
+    const res = await fetch(`http://localhost:8000/booking/${userId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
       },
       body: JSON.stringify({
         movieId,
         time,
-        seats: selectedSeats
-      })
+        seats: selectedSeats,
+        // userId: userId // <--- Ezt is vedd ki a kommentből, ha a backend dict-et vár!
+      }),
     });
 
+    if (!res.ok) {
+        // Hogy pontosan lássuk a böngésző konzoljában, mi a baja a backendnek:
+        const errorData = await res.json();
+        console.error("Backend hiba a foglalásnál:", errorData);
+        throw new Error("Hiba a foglalás létrehozásakor");
+    }
+    
     const data = await res.json();
-    if (!res.ok) throw new Error();
-    return data.booking_id;
+    return data.booking_id; // Visszaadja a létrejött ID-t a fizetéshez
   };
 
-  // 🔥 2. CHECKOUT
-  const checkout = async (bookingId) => {
-    const res = await fetch(`http://localhost:8000/payment/checkout/${bookingId}`, {
-      method: "POST"
-    });
-
-    return await res.json();
+  // 🔥 2. CHECKOUT (Ár és jegytípus rögzítése)
+  const checkout = async (id) => {
+    const res = await fetch(
+      `http://localhost:8000/payment/checkout/${id}?ticket_type=${ticketType}`,
+      { method: "POST" }
+    );
+    if (!res.ok) throw new Error("Hiba az ár kalkulációjakor");
+    const data = await res.json();
+    console.log("Végleges ár:", data.final_price);
+    return data;
   };
 
-  // 🔥 3. FIZETÉS
-  const pay = async (bookingId) => {
-    const res = await fetch(`http://localhost:8000/payment/pay/${bookingId}`, {
+  // 🔥 3. FIZETÉS FELDOLGOZÁSA
+  const processPayment = async (id) => {
+    let url = "";
+
+    if (paymentType === "card") {
+      url = `http://localhost:8000/payment/simulate-card/${id}?card_number=${cardNumber}`;
+    } else if (paymentType === "cash") {
+      url = `http://localhost:8000/payment/initiate-cash/${id}`;
+    }
+
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        payment_type: paymentType
-      })
+      headers: { "Content-Type": "application/json" },
     });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || "Fizetési hiba történt");
+    }
 
     return await res.json();
   };
 
-  // 🔥 4. VERIFY
-  const verify = async (bookingId) => {
-    await fetch(`http://localhost:8000/payment/verify/${bookingId}`, {
-      method: "POST"
+  // 🔥 4. VERIFY (Megerősítés)
+  const verify = async (id) => {
+    const res = await fetch(`http://localhost:8000/payment/verify/${id}`, {
+      method: "POST",
     });
+    if (!res.ok) console.warn("Verify végpont hibát dobott, de a fizetés már lement.");
   };
 
-  // 🔥 FULL FLOW
+  // 🔥 TELJES FOLYAMAT (Gombnyomásra)
   const handleBooking = async () => {
-    if (!isLoggedIn) {
-      alert("Először jelentkezz be!");
-      navigate("/");
-      return;
-    }
-
-    if (selectedSeats.length === 0) {
-      alert("Válassz helyet!");
-      return;
-    }
-
     if (!paymentType) {
       alert("Válassz fizetési módot!");
       return;
     }
 
-    // 🔥 CARD VALIDÁCIÓ
+    // Kártya validáció
     if (paymentType === "card") {
       if (!cardNumber || !cardName || !expiry || !cvc) {
         alert("Tölts ki minden kártyaadatot!");
@@ -113,28 +129,31 @@ function Booking() {
     }
 
     try {
+      // 1. Foglalás
       const id = await createBooking();
       setBookingId(id);
 
+      // 2. Checkout (Ár beállítása)
       await checkout(id);
 
-      const payRes = await pay(id);
+      // 3. Fizetés
+      const payRes = await processPayment(id);
 
-      if (paymentType === "card") {
-        alert(`Kártyás fizetés OK\nTicket: ${payRes.ticket_key}`);
-      } else {
-        alert("Készpénzes fizetés rögzítve!");
-      }
-
+      // 4. Verify (Opcionális, de lefuttatjuk)
       await verify(id);
 
-      alert("Foglalás véglegesítve!");
+      // Siker üzenetek
+      if (paymentType === "card") {
+        alert(`Sikeres kártyás fizetés!\nJegy kód: ${payRes.ticket_key || "N/A"}`);
+      } else {
+        alert("Készpénzes fizetés rögzítve! Kérjük, fizesse ki a pénztárnál.");
+      }
+
       setShowPayment(false);
       navigate("/my-bookings");
-
     } catch (err) {
       console.error(err);
-      alert("Hiba a folyamatban");
+      alert(err.message);
     }
   };
 
@@ -144,12 +163,10 @@ function Booking() {
       navigate("/");
       return;
     }
-
     if (selectedSeats.length === 0) {
       alert("Válassz helyet!");
       return;
     }
-
     setShowPayment(true);
   };
 
@@ -177,61 +194,66 @@ function Booking() {
         </button>
       </section>
 
+      {/* 🔥 MODAL */}
       {showPayment && (
         <div className="modal">
           <div className="modal-content">
-
             <span className="close" onClick={() => setShowPayment(false)}>
               &times;
             </span>
 
             <h2>Fizetés</h2>
 
-            <button onClick={() => setPaymentType("cash")}>
+            {/* Jegytípus választó */}
+            <div style={{ marginBottom: "15px" }}>
+              <label>Jegytípus: </label>
+              <select value={ticketType} onChange={(e) => setTicketType(e.target.value)}>
+                <option value="full price">Teljes árú</option>
+                <option value="student">Diák</option>
+                <option value="senior">Nyugdíjas</option>
+                <option value="child">Gyerek</option>
+              </select>
+            </div>
+
+            <button onClick={() => setPaymentType("cash")} className={paymentType === "cash" ? "selected-btn" : ""}>
               💵 Készpénz
             </button>
 
-            <button onClick={() => setPaymentType("card")}>
+            <button onClick={() => setPaymentType("card")} className={paymentType === "card" ? "selected-btn" : ""}>
               💳 Bankkártya
             </button>
 
-            {/* 🔥 CARD FORM */}
+            {/* 🔥 KÁRTYA FORM */}
             {paymentType === "card" && (
               <div style={{ marginTop: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                
                 <input
-                  placeholder="Kártyaszám"
+                  placeholder="Kártyaszám (Páros = Siker)"
                   value={cardNumber}
-                  onChange={e => setCardNumber(e.target.value)}
+                  onChange={(e) => setCardNumber(e.target.value)}
                   maxLength={16}
                 />
-
                 <input
                   placeholder="Kártyatulajdonos neve"
                   value={cardName}
-                  onChange={e => setCardName(e.target.value)}
+                  onChange={(e) => setCardName(e.target.value)}
                 />
-
                 <input
                   placeholder="Lejárat (MM/YY)"
                   value={expiry}
-                  onChange={e => setExpiry(e.target.value)}
+                  onChange={(e) => setExpiry(e.target.value)}
                 />
-
                 <input
                   placeholder="CVC"
                   value={cvc}
-                  onChange={e => setCvc(e.target.value)}
+                  onChange={(e) => setCvc(e.target.value)}
                   maxLength={3}
                 />
-
               </div>
             )}
 
-            <button onClick={handleBooking} style={{ marginTop: "15px" }}>
-              Fizetés és foglalás
+            <button onClick={handleBooking} style={{ marginTop: "20px", background: "#4CAF50", color: "white" }}>
+              Véglegesítés
             </button>
-
           </div>
         </div>
       )}
