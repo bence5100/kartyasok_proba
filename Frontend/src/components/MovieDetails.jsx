@@ -2,7 +2,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 
-
 function extractVideoId(url) {
   if (!url) return '';
   const match = url.match(/(?:youtube\.com\/watch\?v=)([^&]+)/);
@@ -55,7 +54,7 @@ function MovieDetails() {
             {showTrailer ? "Elrejtés" : "Előzetes megtekintése"} ▶️
           </button>
         </div>
-        
+
         {/* TRAILER CONTENT */}
         {showTrailer && (
           <div style={{ marginTop: '20px', padding: '20px', }}>
@@ -83,9 +82,9 @@ function MovieDetails() {
         <p>Nyelv:{movie.language}</p>
         <p> Feliratok:{movie.subtitle}</p>
         <p>Értékelés: {movie.rating}/10</p>
-        
-      
-        
+
+
+
         <div className="times-grid">
           {movie.times?.map(time => (
             <div
