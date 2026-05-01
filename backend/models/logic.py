@@ -78,7 +78,7 @@ def get_movie_logic(movie_id: int, db: Session):
         "rating": movie.rating,
         "url": movie.trailer_url,
         
-        "times": [s.start_time.strftime("%H:%M") for s in showtimes]
+        "times": [s.start_time.strftime("%m-%d %H:%M") for s in showtimes if s.start_time]
     }
 
 
