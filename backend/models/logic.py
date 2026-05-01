@@ -14,16 +14,24 @@ def register_user(data, db: Session):
 
     hashed_password = pwd_context.hash(data.password)
 
-    user = User(
+    new_user = User(
         username=data.username,
         email=data.email,
         hashed_password=hashed_password
     )
 
-    db.add(user)
+    db.add(new_user)
     db.commit()
+    db.refresh(new_user)
 
-    return {"message": "User created"}
+    return {"message": "User created and logged in",
+            "access_token": f"token_{new_user.id}",
+            "token_type": "bearer",
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username
+            }
+    }
 
 def login_user(data, db: Session):
     user = db.query(User).filter(User.username == data.username).first()
