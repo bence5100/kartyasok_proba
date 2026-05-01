@@ -54,6 +54,8 @@ def get_user_bookings(user_id: int, db: Session = Depends(get_db)):
     # Profil oldalra: felhasználó saját jegyei
     return get_user_bookings_logic(user_id, db)
 
+
+
 @router.get("/admin/bookings")
 def get_all_bookings(db: Session = Depends(get_db)):
     # Admin oldalra: minden foglalás listázása

@@ -45,9 +45,10 @@ function Booking() {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         },
         body: JSON.stringify({
-          movieId,
-          time,
-          seats: selectedSeats
+          movieId: movie.id,
+          time: selectedTime,
+          seats: selectedSeats,
+          userId: loggedInUser.id
         })
       });
 
