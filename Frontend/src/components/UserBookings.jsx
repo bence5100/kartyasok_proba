@@ -1,17 +1,36 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
 import { QRCodeCanvas } from "qrcode.react";
 
 function UserBookings() {
   const [bookings, setBookings] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8000/my-bookings")
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    setIsLoggedIn(true);
+
+    fetch("http://localhost:8000/my-bookings", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
       .then(res => res.json())
       .then(data => setBookings(data));
   }, []);
 
   return (
     <div>
+      <Navbar isLoggedIn={isLoggedIn} />
+
       <h1>Foglalásaim</h1>
 
       {bookings.map((b, i) => (
