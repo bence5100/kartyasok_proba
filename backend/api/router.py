@@ -45,7 +45,7 @@ def get_taken_seats(movie_id: int, time: str, db: Session = Depends(get_db)):
     return get_taken_seats_logic(movie_id, time, db)
 
 
-@router.post("/booking")
+@router.post("/booking")                    ## TODO
 def create_booking(data: BookingRequest, db: Session = Depends(get_db)):
     return create_booking_logic(data, db)
 

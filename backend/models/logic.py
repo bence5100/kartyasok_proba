@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def register_user(data, db: Session):
     existing_user = db.query(User).filter(User.username == data.username).first()
     if existing_user:
@@ -15,23 +16,20 @@ def register_user(data, db: Session):
     hashed_password = pwd_context.hash(data.password)
 
     new_user = User(
-        username=data.username,
-        email=data.email,
-        hashed_password=hashed_password
+        username=data.username, email=data.email, hashed_password=hashed_password
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "User created and logged in",
-            "access_token": f"token_{new_user.id}",
-            "token_type": "bearer",
-            "user": {
-                "id": new_user.id,
-                "username": new_user.username
-            }
+    return {
+        "message": "User created and logged in",
+        "access_token": f"token_{new_user.id}",
+        "token_type": "bearer",
+        "user": {"id": new_user.id, "username": new_user.username},
     }
+
 
 def login_user(data, db: Session):
     user = db.query(User).filter(User.username == data.username).first()
@@ -45,22 +43,15 @@ def login_user(data, db: Session):
     return {
         "access_token": f"token_{user.id}",
         "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username
-        }
+        "user": {"id": user.id, "username": user.username},
     }
+
 
 def get_movies_logic(db: Session):
     movies = db.query(Movie).all()
 
     return [
-        {
-            "id": movie.id,
-            "title": movie.title,
-            "poster_url": movie.poster_url
-            
-        }
+        {"id": movie.id, "title": movie.title, "poster_url": movie.poster_url}
         for movie in movies
     ]
 
@@ -85,8 +76,9 @@ def get_movie_logic(movie_id: int, db: Session):
         "subtitle": movie.subtitles,
         "rating": movie.rating,
         "url": movie.trailer_url,
-        
-        "times": [s.start_time.strftime("%m-%d %H:%M") for s in showtimes if s.start_time]
+        "times": [
+            s.start_time.strftime("%m-%d %H:%M") for s in showtimes if s.start_time
+        ],
     }
 
 
@@ -102,9 +94,9 @@ def get_taken_seats_logic(movie_id: int, time: str, db: Session):
     if not selected_showtime:
         raise HTTPException(status_code=404, detail="Showtime not found")
 
-    bookings = db.query(Booking).filter(
-        Booking.showtime_id == selected_showtime.id
-    ).all()
+    bookings = (
+        db.query(Booking).filter(Booking.showtime_id == selected_showtime.id).all()
+    )
 
     return [
         int(booking.seat_id)
@@ -113,10 +105,8 @@ def get_taken_seats_logic(movie_id: int, time: str, db: Session):
     ]
 
 
-def create_booking_logic(data, db: Session):
-    showtimes = db.query(Showtime).filter(
-        Showtime.movie_id == data.movieId
-    ).all()
+def create_booking_logic(data, db: Session):  ## TODO
+    showtimes = db.query(Showtime).filter(Showtime.movie_id == data.movieId).all()
 
     selected_showtime = None
     for showtime in showtimes:
@@ -127,25 +117,24 @@ def create_booking_logic(data, db: Session):
     if not selected_showtime:
         raise HTTPException(status_code=404, detail="Showtime not found")
 
-    existing_bookings = db.query(Booking).filter(
-        Booking.showtime_id == selected_showtime.id
-    ).all()
+    existing_bookings = (
+        db.query(Booking).filter(Booking.showtime_id == selected_showtime.id).all()
+    )
 
-    taken_seats = {booking.seat_id for booking in existing_bookings}        ##TODO ??
+    taken_seats = {booking.seat_id for booking in existing_bookings}
 
     for seat in data.seats:
         if str(seat) in taken_seats:
             raise HTTPException(
-                status_code=400,
-                detail=f"Seat {seat} is already booked"
+                status_code=400, detail=f"Seat {seat} is already booked"
             )
 
     for seat in data.seats:
         booking = Booking(
-            user_id=1,              ##TODO jo ez igy =1?-re
+            user_id=data.userId,
             showtime_id=selected_showtime.id,
             seat_id=str(seat),
-            ticket_type="full price"
+            ticket_type="full price",
         )
         db.add(booking)
 
@@ -153,66 +142,77 @@ def create_booking_logic(data, db: Session):
 
     return {"message": "Booking successful"}
 
+
 def get_user_bookings_logic(user_id: int, db: Session):
     # Csak a foglalásokat kérjük le az oszlop alapján
     bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
-    
+
     result = []
     for b in bookings:
         # Kézzel keressük meg a vetítést a showtime_id alapján
         st = db.query(Showtime).filter(Showtime.id == b.showtime_id).first()
-        
+
         if st:
             # Kézzel keressük meg a filmet a movie_id alapján
             movie = db.query(Movie).filter(Movie.id == st.movie_id).first()
-            
+
             if movie:
-                result.append({
-                    "id": b.id,
-                    "movie_title": movie.title,
-                    "time": st.start_time.strftime("%m-%d %H:%M") if st.start_time else "N/A",
-                    "seat_id": b.seat_id,
-                    "ticket_type": b.ticket_type
-                })
+                result.append(
+                    {
+                        "id": b.id,
+                        "movie_title": movie.title,
+                        "time": st.start_time.strftime("%m-%d %H:%M")
+                        if st.start_time
+                        else "N/A",
+                        "seat_id": b.seat_id,
+                        "ticket_type": b.ticket_type,
+                    }
+                )
     return result
+
 
 def get_all_bookings_admin_logic(db: Session):
     # Minden foglalást lekérünk az adatbázisból
     bookings = db.query(Booking).all()
-    
+
     result = []
     for b in bookings:
         # Kapcsolatok híján manuálisan keressük meg a kapcsolódó adatokat ID alapján
         u = db.query(User).filter(User.id == b.user_id).first()
         st = db.query(Showtime).filter(Showtime.id == b.showtime_id).first()
-        
+
         # Csak akkor adjuk hozzá, ha találtunk vetítést és felhasználót
         if st and u:
             # A filmet a vetítés movie_id-ja alapján keressük meg
             movie = db.query(Movie).filter(Movie.id == st.movie_id).first()
-            
+
             if movie:
-                result.append({
-                    "id": b.id,
-                    "user": u.username, # A kikeresett User objektumból
-                    "movie": movie.title, # A kikeresett Movie objektumból[cite: 4]
-                    "time": st.start_time.strftime("%m-%d %H:%M") if st.start_time else "N/A",
-                    "seat": b.seat_id,
-                    "type": b.ticket_type
-                })
+                result.append(
+                    {
+                        "id": b.id,
+                        "user": u.username,  # A kikeresett User objektumból
+                        "movie": movie.title,  # A kikeresett Movie objektumból[cite: 4]
+                        "time": st.start_time.strftime("%m-%d %H:%M")
+                        if st.start_time
+                        else "N/A",
+                        "seat": b.seat_id,
+                        "type": b.ticket_type,
+                    }
+                )
     return result
+
 
 def update_booking_logic(booking_id: int, data: dict, db: Session):
     # Foglalás adatainak (pl. jegytípus vagy szék) módosítása admin által
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
-    
+
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-    
+
     if "ticket_type" in data:
         booking.ticket_type = data["ticket_type"]
     if "seat_id" in data:
         booking.seat_id = str(data["seat_id"])
-        
+
     db.commit()
     return {"message": "Booking updated successfully"}
