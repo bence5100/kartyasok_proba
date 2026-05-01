@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
-import ReactPlayer from 'react-player';
+//import ReactPlayer from 'react-player';
 
 function extractVideoId(url) {
   if (!url) return '';
@@ -20,11 +20,12 @@ function MovieDetails() {
   useEffect(() => {
     fetch(`http://localhost:8000/movies/${id}`)
       .then(res => res.json())
-      .then(data =>{
+      .then(data => {
         console.log("Teljes válasz:", data);
         console.log("Minden mező:", Object.keys(data));
         console.log("url mező értéke:", data.url);
-        setMovie(data);})
+        setMovie(data);
+      })
   }, [id]);
 
   if (!movie) return <h1>Betöltés...</h1>;
@@ -40,7 +41,7 @@ function MovieDetails() {
       <main className="content">
         <h1>{movie.title}</h1>
         <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
-         {/* DEBUG INFO - EZT LÁTNOD KELL A KÉPERNYŐN */}
+        {/* DEBUG INFO - EZT LÁTNOD KELL A KÉPERNYŐN */}
         <div style={{ background: '#f0f0f0', padding: '10px', margin: '10px 0' }}>
           <strong>Debug info:</strong><br />
           movie.url értéke: {String(movie.url)}<br />
@@ -48,10 +49,10 @@ function MovieDetails() {
           showTrailer: {String(showTrailer)}<br />
           Van-e link? {movie.url ? "IGEN" : "NEM"}
         </div>
-        
+
         {/* TRAILER GOMB - mindig látszódik */}
         <div style={{ margin: '20px 0', padding: '10px', border: '2px solid red' }}>
-          <button 
+          <button
             onClick={() => {
               console.log("Gombra kattintottál, showTrailer eddig:", showTrailer);
               setShowTrailer(!showTrailer);
@@ -68,7 +69,7 @@ function MovieDetails() {
             {showTrailer ? "Elrejtés" : "Előzetes megtekintése"} ▶️
           </button>
         </div>
-        
+
         {/* TRAILER CONTENT */}
         {showTrailer && (
           <div style={{ marginTop: '20px', padding: '20px', border: '2px solid blue' }}>
@@ -98,9 +99,9 @@ function MovieDetails() {
         <p>Nyelv:{movie.language}</p>
         <p> Feliratok:{movie.subtitle}</p>
         <p>Értékelés: {movie.rating}/10</p>
-        
-      
-        
+
+
+
         <div className="times-grid">
           {movie.times?.map(time => (
             <div
