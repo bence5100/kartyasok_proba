@@ -171,9 +171,11 @@ def get_user_bookings_logic(user_id: int, db: Session):
                         else "N/A",
                         "seat_id": b.seat_id,
                         "ticket_type": b.ticket_type,
+                        "is_paid": b.is_piad,
+                        "qr_code_content": b.qr_code_key,
                     }
                 )
-    return result
+        return result
 
 
 def get_all_bookings_admin_logic(db: Session):
