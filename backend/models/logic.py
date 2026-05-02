@@ -182,6 +182,7 @@ def get_user_bookings_logic(user_id: int, db: Session):
 
     return result
 
+
 def get_all_bookings_admin_logic(db: Session):
     # Minden foglalást lekérünk az adatbázisból
     bookings = db.query(Booking).all()
@@ -201,16 +202,20 @@ def get_all_bookings_admin_logic(db: Session):
                 result.append(
                     {
                         "id": b.id,
-                        "user": u.username,  # A kikeresett User objektumból
-                        "movie": movie.title,  # A kikeresett Movie objektumból[cite: 4]
+                        "user": u.username,
+                        "movie": movie.title,
                         "time": st.start_time.strftime("%m-%d %H:%M")
                         if st.start_time
                         else "N/A",
                         "seat": b.seat_id,
                         "type": b.ticket_type,
+                        "is_paid": b.is_piad,
+                        "total_paid": b.total_paid,
+                        "payment_method": b.payment_method,
+                        "qr_code_content": b.qr_code_key,
                     }
                 )
-    return result
+        return result
 
 
 def update_booking_logic(booking_id: int, data: dict, db: Session):
@@ -227,6 +232,7 @@ def update_booking_logic(booking_id: int, data: dict, db: Session):
 
     db.commit()
     return {"message": "Booking updated successfully"}
+
 
 def get_booking_layout_logic(movie_id: int, time: str, db: Session):
     showtimes = db.query(Showtime).filter(Showtime.movie_id == movie_id).all()
@@ -247,9 +253,7 @@ def get_booking_layout_logic(movie_id: int, time: str, db: Session):
         raise HTTPException(status_code=404, detail="Room not found")
 
     bookings = (
-        db.query(Booking)
-        .filter(Booking.showtime_id == selected_showtime.id)
-        .all()
+        db.query(Booking).filter(Booking.showtime_id == selected_showtime.id).all()
     )
 
     taken_seats = [
