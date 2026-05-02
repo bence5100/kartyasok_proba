@@ -14,9 +14,9 @@ from models.logic import (
     create_booking_logic,
     get_user_bookings_logic,
     get_all_bookings_admin_logic,
-    update_booking_logic
+    update_booking_logic,
+    get_booking_layout_logic,
 )
-
 router = APIRouter()
 
 
@@ -66,6 +66,10 @@ def update_booking(booking_id: int, data: dict, db: Session = Depends(get_db)):
     # Admin oldalra: adatok módosítása
     return update_booking_logic(booking_id, data, db)
 
+
+@router.get("/booking-layout/{movie_id}/{time}")
+def get_booking_layout(movie_id: int, time: str, db: Session = Depends(get_db)):
+    return get_booking_layout_logic(movie_id, time, db)
 
 ### TODO -router.get("/rooms/{room_id}") - get room details, including seating arrangement
 ### TODO - minden táblára get-er és tábla/id -get-ter

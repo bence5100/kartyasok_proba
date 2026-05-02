@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from models.models import User, Movie, Showtime, Booking
+from models.models import User, Movie, Showtime, Booking, Room
 
 from passlib.context import CryptContext
 
@@ -227,3 +227,45 @@ def update_booking_logic(booking_id: int, data: dict, db: Session):
 
     db.commit()
     return {"message": "Booking updated successfully"}
+
+def get_booking_layout_logic(movie_id: int, time: str, db: Session):
+    showtimes = db.query(Showtime).filter(Showtime.movie_id == movie_id).all()
+
+    selected_showtime = None
+
+    for showtime in showtimes:
+        if showtime.start_time.strftime("%m-%d %H:%M") == time:
+            selected_showtime = showtime
+            break
+
+    if not selected_showtime:
+        raise HTTPException(status_code=404, detail="Showtime not found")
+
+    room = db.query(Room).filter(Room.id == selected_showtime.room_id).first()
+
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.showtime_id == selected_showtime.id)
+        .all()
+    )
+
+    taken_seats = [
+        int(booking.seat_id)
+        for booking in bookings
+        if booking.seat_id and booking.seat_id.isdigit()
+    ]
+
+    return {
+        "showtime_id": selected_showtime.id,
+        "room": {
+            "id": room.id,
+            "name": room.name,
+            "capacity": room.capacity,
+            "rows": room.row,
+            "cols": room.cols,
+        },
+        "taken_seats": taken_seats,
+    }

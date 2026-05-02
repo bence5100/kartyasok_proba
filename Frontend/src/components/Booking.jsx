@@ -12,6 +12,8 @@ function Booking() {
 
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [takenSeats, setTakenSeats] = useState([]);
+  const [room, setRoom] = useState(null);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [loadingSeats, setLoadingSeats] = useState(false);
@@ -30,34 +32,36 @@ function Booking() {
   }, []);
 
   useEffect(() => {
-    const loadTakenSeats = async () => {
+    const loadBookingLayout = async () => {
       if (!movieId || !time) return;
 
       try {
         setLoadingSeats(true);
 
         const res = await fetch(
-          `${API_URL}/seats/${movieId}/${encodeURIComponent(time)}`
+          `${API_URL}/booking-layout/${movieId}/${encodeURIComponent(time)}`
         );
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => null);
           throw new Error(
-            errorData?.detail || "Nem sikerült lekérni a foglalt székeket."
+            errorData?.detail || "Nem sikerült lekérni a terem adatait."
           );
         }
 
         const data = await res.json();
-        setTakenSeats(Array.isArray(data) ? data : []);
+
+        setRoom(data.room);
+        setTakenSeats(Array.isArray(data.taken_seats) ? data.taken_seats : []);
       } catch (err) {
-        console.error("Foglalt székek lekérési hiba:", err);
+        console.error("Terem/szék lekérési hiba:", err);
         alert(err.message);
       } finally {
         setLoadingSeats(false);
       }
     };
 
-    loadTakenSeats();
+    loadBookingLayout();
   }, [movieId, time]);
 
   if (!movieId || !time) {
@@ -222,6 +226,7 @@ function Booking() {
       setSubmitting(true);
 
       const bookingIds = await createBooking();
+
       let lastPaymentResult = null;
       let totalPrice = 0;
 
@@ -240,7 +245,8 @@ function Booking() {
 
       if (paymentType === "card") {
         alert(
-          `Sikeres kártyás fizetés!\nÖsszeg: ${totalPrice} HUF\nJegykód: ${lastPaymentResult?.ticket_key || "N/A"
+          `Sikeres kártyás fizetés!\nÖsszeg: ${totalPrice} HUF\nJegykód: ${
+            lastPaymentResult?.ticket_key || "N/A"
           }`
         );
       } else {
@@ -260,19 +266,41 @@ function Booking() {
     }
   };
 
+  const seatCount = room?.capacity || 0;
+  const columnCount = room?.cols || 8;
+
   return (
     <div>
       <Navbar isLoggedIn={isLoggedIn} />
 
       <section className="content">
         <h1>Helyfoglalás</h1>
+
         <p>Vetítés időpontja: {time}</p>
 
+        {room && (
+          <p>
+            Terem: {room.name} | Sorok: {room.rows} | Oszlopok: {room.cols} |
+            Férőhely: {room.capacity}
+          </p>
+        )}
+
+        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+          <span style={{ marginRight: "20px" }}>⬛ Szabad</span>
+          <span style={{ marginRight: "20px" }}>🟦 Kiválasztva</span>
+          <span>🟥 Foglalt</span>
+        </div>
+
         {loadingSeats ? (
-          <p>Foglalt székek betöltése...</p>
+          <p>Terem és foglalt székek betöltése...</p>
         ) : (
-          <div className="seats">
-            {Array.from({ length: 40 }).map((_, index) => {
+          <div
+            className="seats"
+            style={{
+              gridTemplateColumns: `repeat(${columnCount}, 50px)`,
+            }}
+          >
+            {Array.from({ length: seatCount }).map((_, index) => {
               const seatNumber = index + 1;
               const isSelected = selectedSeats.includes(seatNumber);
               const isTaken = takenSeats.includes(seatNumber);
@@ -280,10 +308,11 @@ function Booking() {
               return (
                 <div
                   key={seatNumber}
-                  className={`seat ${isSelected ? "selected" : ""} ${isTaken ? "booked" : ""
-                    }`}
+                  className={`seat ${isSelected ? "selected" : ""} ${
+                    isTaken ? "booked" : ""
+                  }`}
                   onClick={() => toggleSeat(seatNumber)}
-                  title={isTaken ? "Foglalt hely" : "Szabad hely"}
+                  title={isTaken ? "Ez a hely már foglalt" : "Szabad hely"}
                 >
                   {seatNumber}
                 </div>
@@ -292,7 +321,10 @@ function Booking() {
           </div>
         )}
 
-        <p>Kiválasztott helyek: {selectedSeats.length > 0 ? selectedSeats.join(", ") : "nincs"}</p>
+        <p>
+          Kiválasztott helyek:{" "}
+          {selectedSeats.length > 0 ? selectedSeats.join(", ") : "nincs"}
+        </p>
 
         <button className="btn-primary" onClick={openPayment}>
           Foglalás
