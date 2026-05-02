@@ -105,7 +105,7 @@ def get_taken_seats_logic(movie_id: int, time: str, db: Session):
     ]
 
 
-def create_booking_logic(data, db: Session):  ## TODO
+def create_booking_logic(data, db: Session):
     showtimes = db.query(Showtime).filter(Showtime.movie_id == data.movieId).all()
 
     selected_showtime = None
@@ -145,8 +145,10 @@ def create_booking_logic(data, db: Session):  ## TODO
 
     db.commit()
 
-    return {"message": "Booking successful", "booking_ids": booking_ids}
-
+    return {
+        "message": "Booking successful",
+        "booking_ids": booking_ids
+    }
 
 def get_user_bookings_logic(user_id: int, db: Session):
     bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
@@ -184,39 +186,38 @@ def get_user_bookings_logic(user_id: int, db: Session):
 
 
 def get_all_bookings_admin_logic(db: Session):
-    # Minden foglalást lekérünk az adatbázisból
     bookings = db.query(Booking).all()
 
     result = []
+
     for b in bookings:
-        # Kapcsolatok híján manuálisan keressük meg a kapcsolódó adatokat ID alapján
         u = db.query(User).filter(User.id == b.user_id).first()
         st = db.query(Showtime).filter(Showtime.id == b.showtime_id).first()
 
-        # Csak akkor adjuk hozzá, ha találtunk vetítést és felhasználót
-        if st and u:
-            # A filmet a vetítés movie_id-ja alapján keressük meg
+        movie = None
+        if st:
             movie = db.query(Movie).filter(Movie.id == st.movie_id).first()
 
-            if movie:
-                result.append(
-                    {
-                        "id": b.id,
-                        "user": u.username,
-                        "movie": movie.title,
-                        "time": st.start_time.strftime("%m-%d %H:%M")
-                        if st.start_time
-                        else "N/A",
-                        "seat": b.seat_id,
-                        "type": b.ticket_type,
-                        "is_paid": b.is_piad,
-                        "total_paid": b.total_paid,
-                        "payment_method": b.payment_method,
-                        "qr_code_content": b.qr_code_key,
-                    }
-                )
-        return result
+        result.append(
+            {
+                "id": b.id,
+                "user": u.username if u else f"Ismeretlen user #{b.user_id}",
+                "user_id": b.user_id,
+                "movie": movie.title if movie else "Ismeretlen film",
+                "showtime_id": b.showtime_id,
+                "time": st.start_time.strftime("%m-%d %H:%M")
+                if st and st.start_time
+                else "Ismeretlen időpont",
+                "seat": b.seat_id,
+                "type": b.ticket_type,
+                "is_paid": b.is_piad,
+                "total_paid": b.total_paid,
+                "payment_method": b.payment_method,
+                "qr_code_content": b.qr_code_key,
+            }
+        )
 
+    return result
 
 def update_booking_logic(booking_id: int, data: dict, db: Session):
     # Foglalás adatainak (pl. jegytípus vagy szék) módosítása admin által
