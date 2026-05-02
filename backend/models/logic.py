@@ -132,22 +132,21 @@ def create_booking_logic(data, db: Session):  ## TODO
     booking_ids = []
 
     for seat in data.seats:
-            booking = Booking(
+        booking = Booking(
             user_id=data.userId,
             showtime_id=selected_showtime.id,
             seat_id=str(seat),
             ticket_type="full price",
         )
-    db.add(booking)
-    db.flush()
-    booking_ids.append(booking.id)
+
+        db.add(booking)
+        db.flush()
+        booking_ids.append(booking.id)
 
     db.commit()
 
-    return {
-        "message": "Booking successful",
-        "booking_ids": booking_ids
-        }
+    return {"message": "Booking successful", "booking_ids": booking_ids}
+
 
 def get_user_bookings_logic(user_id: int, db: Session):
     # Csak a foglalásokat kérjük le az oszlop alapján
