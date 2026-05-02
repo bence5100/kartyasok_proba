@@ -61,27 +61,35 @@ function Home() {
     try {
       const res = await fetch("http://localhost:8000/login", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ username, password })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await res.json();
 
+      if (!res.ok) {
+        alert(data.detail || "Hibás felhasználónév vagy jelszó");
+        return;
+      }
+
       if (data.access_token) {
-        localStorage.setItem("token", result.access_token);
-        localStorage.setItem("user", JSON.stringify(result.user)); // 🔥
+        localStorage.setItem("token", data.access_token);
+        localStorage.setItem("user", JSON.stringify(data.user));
 
         setIsLoggedIn(true);
 
         if (data.user?.username === "admin") {
           setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
         }
-      }
 
-      alert("Sikeres bejelentkezés!");
-      closeLogin();
-    } catch {
-      alert("Hiba login");
+        alert("Sikeres bejelentkezés!");
+        closeLogin();
+      }
+    } catch (error) {
+      console.error("Login hiba:", error);
+      alert("Hiba login közben");
     }
   };
 
@@ -103,7 +111,7 @@ function Home() {
     try {
       const res = await fetch("http://localhost:8000/register", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password })
       });
 
