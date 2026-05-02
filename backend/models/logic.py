@@ -149,34 +149,38 @@ def create_booking_logic(data, db: Session):  ## TODO
 
 
 def get_user_bookings_logic(user_id: int, db: Session):
-    # Csak a foglalásokat kérjük le az oszlop alapján
     bookings = db.query(Booking).filter(Booking.user_id == user_id).all()
 
     result = []
+
     for b in bookings:
-        # Kézzel keressük meg a vetítést a showtime_id alapján
         st = db.query(Showtime).filter(Showtime.id == b.showtime_id).first()
 
-        if st:
-            # Kézzel keressük meg a filmet a movie_id alapján
-            movie = db.query(Movie).filter(Movie.id == st.movie_id).first()
+        if not st:
+            continue
 
-            if movie:
-                result.append(
-                    {
-                        "id": b.id,
-                        "movie_title": movie.title,
-                        "time": st.start_time.strftime("%m-%d %H:%M")
-                        if st.start_time
-                        else "N/A",
-                        "seat_id": b.seat_id,
-                        "ticket_type": b.ticket_type,
-                        "is_paid": b.is_piad,
-                        "qr_code_content": b.qr_code_key,
-                    }
-                )
-        return result
+        movie = db.query(Movie).filter(Movie.id == st.movie_id).first()
 
+        if not movie:
+            continue
+
+        result.append(
+            {
+                "id": b.id,
+                "movie_title": movie.title,
+                "time": st.start_time.strftime("%m-%d %H:%M")
+                if st.start_time
+                else "N/A",
+                "seat_id": b.seat_id,
+                "ticket_type": b.ticket_type,
+                "is_paid": b.is_piad,
+                "total_paid": b.total_paid,
+                "payment_method": b.payment_method,
+                "qr_code_content": b.qr_code_key,
+            }
+        )
+
+    return result
 
 def get_all_bookings_admin_logic(db: Session):
     # Minden foglalást lekérünk az adatbázisból
