@@ -11,14 +11,12 @@ function Navbar({ isLoggedIn, isAdmin, onLoginClick, onLogout }) {
 
       <nav className="nav-buttons">
         
-        {/* 🔒 CSAK LOGIN UTÁN */}
         {isLoggedIn && !isAdmin &&(
           <button className="nav-btn" onClick={() => navigate("/my-bookings")}>
             Foglalásaim
           </button>
         )}
 
-        {/* 🔥 CSAK ADMIN LÁTJA */}
         {isAdmin && (
           <button className="nav-btn admin" onClick={() => navigate("/admin")}>
             Admin

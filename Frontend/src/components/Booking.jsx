@@ -366,7 +366,7 @@ function Booking() {
                 className={paymentType === "cash" ? "active-payment" : ""}
                 disabled={submitting}
               >
-                💵 Készpénz
+                Készpénz
               </button>
 
               <button
@@ -375,7 +375,7 @@ function Booking() {
                 className={paymentType === "card" ? "active-payment" : ""}
                 disabled={submitting}
               >
-                💳 Bankkártya
+                Bankkártya
               </button>
             </div>
 

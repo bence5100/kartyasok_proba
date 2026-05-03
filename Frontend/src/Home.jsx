@@ -50,7 +50,7 @@ function Home() {
     loadMovies();
   }, []);
 
-  // 🔐 LOGIN
+  // LOGIN
   const login = async (e) => {
     e.preventDefault();
 
@@ -93,7 +93,7 @@ function Home() {
     }
   };
 
-  // 🆕 REGISTER
+  //REGISTER
   const register = async (e) => {
     e.preventDefault();
 

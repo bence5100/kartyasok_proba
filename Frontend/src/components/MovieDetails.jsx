@@ -35,7 +35,6 @@ function MovieDetails() {
         <img src={movie.poster_url} alt={movie.title} className="movie-poster" />
          
         
-        {/* TRAILER GOMB - mindig látszódik */}
         <div style={{ margin: '20px 0', padding: '10px',  }}>
           <button 
             onClick={() => {
@@ -55,7 +54,6 @@ function MovieDetails() {
           </button>
         </div>
 
-        {/* TRAILER CONTENT */}
         {showTrailer && (
           <div style={{ marginTop: '20px', padding: '20px', }}>
             {movie.url ? (
