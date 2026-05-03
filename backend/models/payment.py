@@ -37,7 +37,7 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
 
     multiplier = discounts.get(ticket_type, 1.0)
 
-    # Mivel egy foglalás (Booking) nálad egy széket jelent:
+    
     final_price = alap_ar * multiplier
 
     # 4. VIP felár ellenőrzése (Példányon, nem az Osztályon!)
@@ -45,7 +45,7 @@ def checkout(booking_id: int, ticket_type: str, db: Session = Depends(get_db)):
         final_price += 500.0
 
     # 5. MENTÉS A REKORDBA
-    # Ügyelj a mezőnevekre: a models.py alapján 'total_paid' van, nem 'total_price'
+    
     booking_record.total_paid = final_price
     booking_record.ticket_type = ticket_type
 
@@ -174,7 +174,7 @@ def simulate_card_payment(
     last_digit = int(clean_card_number[-1])
     if last_digit % 2 != 0:
         raise HTTPException(
-            status_code=402, detail="Fizetés elutasítva: Páratlan kártyaszám!"
+            status_code=402, detail="Fizetés elutasítva: "
         )
 
     # 3. SIKER: Ha páros
